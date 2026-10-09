@@ -8,6 +8,18 @@ const api = axios.create({
   withXSRFToken: true,
 })
 
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response?.status === 401) {
+      const { authStore } = await import('../stores/auth')
+      authStore.clearUser()
+    }
+
+    return Promise.reject(error)
+  },
+)
+
 export function ensureCsrfCookie() {
   return axios.get(`${backendUrl}/sanctum/csrf-cookie`, { withCredentials: true })
 }

@@ -1,0 +1,111 @@
+/* Design tokens: see DESIGN.md at the repo root for how each is used. */
+:root {
+  /* Surfaces (plum scale, darkest to lightest) */
+  --color-night-floor: #08060a;
+  --color-surface-low: #1b1720;
+  --color-surface-hover: #241f2a;
+  --color-surface-raised: #2a2531;
+  --color-divider: #38333c;
+  --color-border-strong: #423b49;
+
+  /* Text ladder */
+  --color-text-primary: #f5f0f4;
+  --color-text-secondary: #c9c3cf;
+  --color-text-muted: #9a93a0;
+  --color-text-subtle: #8a8390;
+  --color-text-faint: #625c68;
+
+  /* Accent: the single glowing hue */
+  --color-accent: #e8158a;
+  --color-accent-deep: #ce117b;
+  --color-accent-blush: #ffb3de;
+
+  /* Status */
+  --color-danger: #c92f2f;
+  --color-danger-text: #ff6b6b;
+
+  /* Shape */
+  --radius-button: 4px;
+  --radius-field: 6px;
+  --radius-menu: 8px;
+  --radius-card: 12px;
+
+  /* Depth (shadows carry the plum of the floor instead of neutral black) */
+  --shadow-panel: 0 12px 32px rgba(10, 4, 16, 0.5);
+  --shadow-panel-strong: 0 12px 32px rgba(10, 4, 16, 0.6);
+  --shadow-halo: 0 8px 20px rgba(232, 21, 138, 0.45), 0 0 24px rgba(232, 21, 138, 0.5);
+
+  /* Type */
+  --font-display: 'Nunito', sans-serif;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Page gutters that also clear a notch or home indicator (needs viewport-fit=cover) */
+  --page-pad-top: calc(24px + env(safe-area-inset-top, 0px));
+  --page-pad-bottom: calc(48px + env(safe-area-inset-bottom, 0px));
+  --page-pad-left: max(16px, env(safe-area-inset-left, 0px));
+  --page-pad-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* No double-tap-to-zoom delay on anything tappable */
+:where(a, button, input, select, textarea, summary, label, [role='button']) {
+  touch-action: manipulation;
+}
+
+/* Text for screen readers only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Keyboard focus: one visible ring for every custom control (rows, text buttons, summaries) */
+:where(a, button, summary, [role='button'], [tabindex]:not([tabindex='-1'])):focus-visible {
+  outline: 2px solid var(--color-accent-blush);
+  outline-offset: 2px;
+}
+
+h1,
+h2 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* Clickable list rows (workouts, history, records): tonal hover and a small press */
+.pressable {
+  transition:
+    background 0.2s var(--ease-out),
+    transform 0.15s var(--ease-out);
+}
+
+.pressable:active {
+  transform: scale(0.985);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .pressable:active {
+    transform: none;
+  }
+}
