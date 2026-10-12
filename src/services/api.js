@@ -1,6 +1,7 @@
 import axios from 'axios'
 
-const backendUrl = 'http://localhost:8000'
+// In productie, frontend-ul e servit de Laravel de pe aceeasi adresa
+const backendUrl = import.meta.env.PROD ? '' : 'http://localhost:8000'
 
 const api = axios.create({
   baseURL: `${backendUrl}/api`,
