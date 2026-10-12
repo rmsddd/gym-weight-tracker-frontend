@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import api from '../services/api'
+import { formatSet } from '../utils/formatSet'
 import PageLayout from './ui/PageLayout.vue'
 import SkeletonList from './ui/SkeletonList.vue'
 
@@ -71,7 +72,7 @@ function formatDate(dateString) {
             {{ record.exercise.category?.name }} · {{ formatDate(record.date) }}
           </p>
         </div>
-        <p class="record-value">{{ record.weight }} kg × {{ record.reps }}</p>
+        <p class="record-value">{{ formatSet(record) }}</p>
       </v-card>
     </div>
   </PageLayout>

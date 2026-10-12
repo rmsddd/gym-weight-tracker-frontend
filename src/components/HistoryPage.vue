@@ -121,6 +121,11 @@ function totalVolume(workout) {
   return Math.round(workout.exercises.reduce((sum, e) => sum + e.volume, 0))
 }
 
+// Minutes logged on timed exercises (plank, cardio), which have no volume
+function timedMinutes(workout) {
+  return Math.round(workout.exercises.reduce((sum, e) => sum + (e.minutes ?? 0), 0) * 10) / 10
+}
+
 function totalSets(workout) {
   return workout.exercises.reduce((sum, e) => sum + e.sets_count, 0)
 }
@@ -191,7 +196,9 @@ function totalSets(workout) {
         </div>
         <p class="history-meta">
           <template v-if="workout.duration_minutes != null">{{ workout.duration_minutes }} min · </template>
-          {{ totalSets(workout) }} sets · {{ totalVolume(workout) }} kg volume
+          {{ totalSets(workout) }} sets
+          <template v-if="totalVolume(workout) > 0 || timedMinutes(workout) === 0"> · {{ totalVolume(workout) }} kg volume</template>
+          <template v-if="timedMinutes(workout) > 0"> · {{ timedMinutes(workout) }} min timed</template>
         </p>
         <ul v-if="workout.exercises.length > 0" class="chips">
           <li v-for="(exercise, index) in workout.exercises" :key="index">{{ exercise.name }}</li>

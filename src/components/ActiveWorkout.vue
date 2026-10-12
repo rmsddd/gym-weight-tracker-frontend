@@ -1,8 +1,9 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../services/api'
 import { elapsedSecondsBetween, formatElapsed } from '../utils/formatElapsed'
+import { formatSet } from '../utils/formatSet'
 import { mdiClipboardListOutline, mdiDeleteOutline, mdiDotsVertical } from '@mdi/js'
 import AmbientBackground from './ui/AmbientBackground.vue'
 import Avatar from './ui/Avatar.vue'
@@ -32,6 +33,7 @@ const isDeletingItem = ref(false)
 const isDeleteOpen = ref(false)
 const isDeleting = ref(false)
 const newExerciseCategoryId = ref('')
+const newExerciseUnit = ref('kg')
 const setInputs = ref({})
 const setErrors = ref({})
 const isRecordMoment = ref(false)
@@ -97,6 +99,20 @@ const noResults = computed(() => searchTerm.value !== '' && groupedExercises.val
 
 const addedExerciseIds = computed(() => new Set(workoutExercises.value.map((we) => we.exercise?.id)))
 
+// Timed exercises (plank, cardio) log how long a set lasted instead of weight and reps
+const isTimed = (workoutExercise) => workoutExercise.exercise?.unit === 'min'
+
+const unitOptions = [
+  { title: 'Weight × reps', value: 'kg' },
+  { title: 'Minutes', value: 'min' },
+]
+
+// Cardio is measured in minutes, so picking that category for a new exercise picks the unit too
+watch(newExerciseCategoryId, (id) => {
+  const category = categories.value.find((c) => c.id === Number(id))
+  newExerciseUnit.value = category?.name === 'Cardio' ? 'min' : 'kg'
+})
+
 function setError(message, error) {
   errorMessage.value = message
   console.error(message, error)
@@ -143,7 +159,7 @@ function lastTime(exerciseId) {
   if (!previous) return null
   return {
     date: formatShortDate(previous.date),
-    sets: previous.sets.map((s) => `${s.weight} kg × ${s.reps}`).join(' · '),
+    sets: previous.sets.map(formatSet).join(' · '),
   }
 }
 
@@ -153,7 +169,13 @@ function lastTime(exerciseId) {
 function suggestedSet(workoutExercise) {
   const previous = previousSets.value[workoutExercise.exercise.id]?.sets
   const match = previous?.[workoutExercise.sets.length] ?? workoutExercise.sets.at(-1) ?? previous?.at(-1)
-  return match ? { weight: Number(match.weight), reps: Number(match.reps) } : null
+  if (!match) return null
+
+  // A set logged before the exercise changed its unit has nothing to suggest
+  if (isTimed(workoutExercise)) {
+    return match.duration_minutes != null ? { duration: Number(match.duration_minutes) } : null
+  }
+  return match.weight != null ? { weight: Number(match.weight), reps: Number(match.reps) } : null
 }
 
 function setPlaceholder(workoutExercise, field) {
@@ -191,16 +213,20 @@ async function loadBests() {
   try {
     const response = await api.get('/personal-records')
     const records = response.data.data ?? response.data
-    bests = Object.fromEntries(records.map((r) => [r.exercise.id, { weight: r.weight, reps: r.reps }]))
+    bests = Object.fromEntries(
+      records.map((r) => [r.exercise.id, { weight: r.weight, reps: r.reps, duration: r.duration_minutes }]),
+    )
   } catch (error) {
     console.error('Failed to load personal records:', error)
   }
 }
 
-function beatsBest(exerciseId, weight, reps) {
+// `set` is { duration } for a timed exercise, { weight, reps } otherwise
+function beatsBest(exerciseId, set) {
   const best = bests[exerciseId]
   if (!best) return false
-  return weight > best.weight || (weight === best.weight && reps > best.reps)
+  if (set.duration != null) return set.duration > (best.duration ?? 0)
+  return set.weight > best.weight || (set.weight === best.weight && set.reps > best.reps)
 }
 
 function celebrateRecord() {
@@ -343,6 +369,7 @@ async function createExercise() {
     const response = await api.post('/exercises', {
       name: searchTerm.value,
       category_id: Number(newExerciseCategoryId.value),
+      unit: newExerciseUnit.value,
     })
     const created = response.data.data ?? response.data
     exercises.value.push(created)
@@ -371,27 +398,40 @@ async function addSet(workoutExercise) {
 
   const input = setInputs.value[workoutExercise.id] ?? {}
   const suggestion = suggestedSet(workoutExercise)
-  const weight = isBlank(input.weight) ? suggestion?.weight : Number(input.weight)
-  const reps = isBlank(input.reps) ? suggestion?.reps : Number(input.reps)
+  let logged
 
-  if (weight == null || reps == null || Number.isNaN(weight) || Number.isNaN(reps)) {
-    setErrors.value[workoutExercise.id] = 'Enter the weight and the reps.'
-    return
+  if (isTimed(workoutExercise)) {
+    const duration = isBlank(input.duration) ? suggestion?.duration : Number(input.duration)
+
+    if (duration == null || Number.isNaN(duration) || duration <= 0) {
+      setErrors.value[workoutExercise.id] = 'Enter the minutes.'
+      return
+    }
+    logged = { duration }
+  } else {
+    const weight = isBlank(input.weight) ? suggestion?.weight : Number(input.weight)
+    const reps = isBlank(input.reps) ? suggestion?.reps : Number(input.reps)
+
+    if (weight == null || reps == null || Number.isNaN(weight) || Number.isNaN(reps)) {
+      setErrors.value[workoutExercise.id] = 'Enter the weight and the reps.'
+      return
+    }
+    logged = { weight, reps }
   }
   setErrors.value[workoutExercise.id] = ''
   savingSetFor.add(workoutExercise.id)
 
   try {
-    const response = await api.post(`/workouts/${workoutId}/exercises/${workoutExercise.id}/sets`, {
-      weight,
-      reps,
-    })
+    const response = await api.post(
+      `/workouts/${workoutId}/exercises/${workoutExercise.id}/sets`,
+      logged.duration != null ? { duration_minutes: logged.duration } : logged,
+    )
     workoutExercise.sets.push(response.data.data ?? response.data)
 
     const exerciseId = workoutExercise.exercise.id
-    if (beatsBest(exerciseId, weight, reps)) celebrateRecord()
-    if (!bests[exerciseId] || beatsBest(exerciseId, weight, reps)) bests[exerciseId] = { weight, reps }
-    setInputs.value[workoutExercise.id] = { weight: input.weight ?? '', reps: '' }
+    if (beatsBest(exerciseId, logged)) celebrateRecord()
+    if (!bests[exerciseId] || beatsBest(exerciseId, logged)) bests[exerciseId] = logged
+    setInputs.value[workoutExercise.id] = { weight: input.weight ?? '', reps: '', duration: '' }
   } catch (error) {
     setErrors.value[workoutExercise.id] = 'Could not save the set. Try again.'
     console.error('Failed to save set:', error)
@@ -411,7 +451,7 @@ async function removeSet(workoutExercise, set) {
 
 function initInputs(list) {
   for (const we of list) {
-    setInputs.value[we.id] ??= { weight: '', reps: '' }
+    setInputs.value[we.id] ??= { weight: '', reps: '', duration: '' }
   }
 }
 
@@ -517,7 +557,7 @@ onBeforeUnmount(() => {
           <ul v-if="we.sets.length > 0" class="sets">
             <li v-for="(set, index) in we.sets" :key="set.id">
               <span class="set-number">Set {{ index + 1 }}</span>
-              <span>{{ Number(set.weight) }} kg × {{ set.reps }}</span>
+              <span>{{ formatSet(set) }}</span>
               <button
                 v-if="!isFinished"
                 type="button"
@@ -532,34 +572,52 @@ onBeforeUnmount(() => {
 
           <form v-if="!isFinished" class="set-form" novalidate @submit.prevent="addSet(we)">
             <v-text-field
-              v-model="setInputs[we.id].weight"
+              v-if="isTimed(we)"
+              v-model="setInputs[we.id].duration"
               type="number"
               inputmode="decimal"
               min="0"
               step="0.5"
-              suffix="kg"
+              suffix="min"
               persistent-placeholder
-              aria-label="Weight in kg"
+              aria-label="Duration in minutes"
               autocomplete="off"
-              :name="`weight-${we.id}`"
-              :placeholder="setPlaceholder(we, 'weight')"
+              :name="`duration-${we.id}`"
+              :placeholder="setPlaceholder(we, 'duration')"
               density="compact"
               hide-details
             />
-            <v-text-field
-              v-model="setInputs[we.id].reps"
-              type="number"
-              inputmode="numeric"
-              min="0"
-              suffix="reps"
-              persistent-placeholder
-              aria-label="Reps"
-              autocomplete="off"
-              :name="`reps-${we.id}`"
-              :placeholder="setPlaceholder(we, 'reps')"
-              density="compact"
-              hide-details
-            />
+            <template v-else>
+              <v-text-field
+                v-model="setInputs[we.id].weight"
+                type="number"
+                inputmode="decimal"
+                min="0"
+                step="0.5"
+                suffix="kg"
+                persistent-placeholder
+                aria-label="Weight in kg"
+                autocomplete="off"
+                :name="`weight-${we.id}`"
+                :placeholder="setPlaceholder(we, 'weight')"
+                density="compact"
+                hide-details
+              />
+              <v-text-field
+                v-model="setInputs[we.id].reps"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                suffix="reps"
+                persistent-placeholder
+                aria-label="Reps"
+                autocomplete="off"
+                :name="`reps-${we.id}`"
+                :placeholder="setPlaceholder(we, 'reps')"
+                density="compact"
+                hide-details
+              />
+            </template>
             <BaseButton type="submit" size="sm" class="add-set">+ Set</BaseButton>
           </form>
           <p v-if="setErrors[we.id]" class="error set-error" role="alert">{{ setErrors[we.id] }}</p>
@@ -607,6 +665,13 @@ onBeforeUnmount(() => {
               item-value="id"
               placeholder="Choose a category"
               aria-label="Category for the new exercise"
+              density="compact"
+              hide-details
+            />
+            <v-select
+              v-model="newExerciseUnit"
+              :items="unitOptions"
+              aria-label="How the new exercise is measured"
               density="compact"
               hide-details
             />
