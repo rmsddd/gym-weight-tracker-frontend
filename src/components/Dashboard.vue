@@ -108,10 +108,10 @@ async function confirmDelete() {
     <AmbientBackground />
     <main class="dashboard-content">
       <header class="dashboard-header">
-        <div class="greeting-group">
+        <RouterLink to="/profile" class="greeting-group" aria-label="Open your profile">
           <Avatar :code="authStore.state.user?.avatar" :size="44" />
           <h1 class="greeting">Hi, {{ firstName }}</h1>
-        </div>
+        </RouterLink>
 
         <div class="header-actions">
           <BaseButton class="add-workout-button" @click="router.push('/workouts/new')">
@@ -257,6 +257,14 @@ async function confirmDelete() {
   align-items: center;
   gap: 12px;
   min-width: 0;
+  border-radius: var(--radius-card);
+  color: inherit;
+  text-decoration: none;
+  transition: opacity 0.2s var(--ease-out);
+}
+
+.greeting-group:hover {
+  opacity: 0.85;
 }
 
 .greeting {

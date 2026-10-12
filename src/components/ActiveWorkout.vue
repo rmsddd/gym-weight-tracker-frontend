@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import api from '../services/api'
 import { elapsedSecondsBetween, formatElapsed } from '../utils/formatElapsed'
 import { formatSet } from '../utils/formatSet'
-import { mdiClipboardListOutline, mdiDeleteOutline, mdiDotsVertical } from '@mdi/js'
+import { mdiClipboardListOutline, mdiDeleteOutline } from '@mdi/js'
 import AmbientBackground from './ui/AmbientBackground.vue'
 import Avatar from './ui/Avatar.vue'
 import authStore from '../stores/auth'
@@ -475,34 +475,27 @@ onBeforeUnmount(() => {
       <header class="topbar">
         <button type="button" class="back" @click="goBack">← Back</button>
 
-        <v-menu v-if="workout" location="bottom end">
-          <template #activator="{ props }">
-            <v-btn
-              v-bind="props"
-              :icon="mdiDotsVertical"
-              variant="outlined"
-              size="small"
-              rounded="md"
-              color="secondary"
-              aria-label="Workout options"
-            />
-          </template>
-
-          <v-list bg-color="surface-bright" class="options-menu" density="comfortable">
-            <v-list-item
-              :prepend-icon="mdiClipboardListOutline"
-              :title="templateSaved ? 'Template saved' : 'Save as template'"
-              :disabled="templateSaved || workoutExercises.length === 0"
-              @click="openTemplateDialog"
-            />
-            <v-list-item
-              :prepend-icon="mdiDeleteOutline"
-              title="Delete workout"
-              base-color="error"
-              @click="isDeleteOpen = true"
-            />
-          </v-list>
-        </v-menu>
+        <div v-if="workout" class="workout-actions">
+          <v-btn
+            :prepend-icon="mdiClipboardListOutline"
+            variant="outlined"
+            size="small"
+            :disabled="templateSaved || workoutExercises.length === 0"
+            @click="openTemplateDialog"
+          >
+            {{ templateSaved ? 'Template saved' : 'Save as template' }}
+          </v-btn>
+          <v-btn
+            :prepend-icon="mdiDeleteOutline"
+            variant="outlined"
+            size="small"
+            color="error"
+            aria-label="Delete workout"
+            @click="isDeleteOpen = true"
+          >
+            Delete
+          </v-btn>
+        </div>
       </header>
 
       <!-- Stays in view while scrolling, so the timer and Stop are always one tap away -->
@@ -802,10 +795,11 @@ onBeforeUnmount(() => {
   color: var(--color-text-primary);
 }
 
-.options-menu {
-  min-width: 200px;
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-menu);
+.workout-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .timer-bar {
