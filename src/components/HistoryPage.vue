@@ -13,6 +13,7 @@ const router = useRouter()
 const workouts = ref([])
 const exercises = ref([])
 const categories = ref([])
+const monthlyStats = ref([])
 const isLoading = ref(true)
 const errorMessage = ref('')
 
@@ -43,6 +44,46 @@ const hasFilters = computed(() => activeFilterCount.value > 0)
 
 // Folded away by default so results start near the top of a phone screen
 const filtersOpen = ref(hasFilters.value)
+
+// Oldest month on the left, the current one on the right
+const months = computed(() =>
+  [...monthlyStats.value].reverse().map((stat) => {
+    const [year, monthNumber] = stat.month.split('-').map(Number)
+    const firstDay = new Date(year, monthNumber - 1, 1)
+    const lastDay = new Date(year, monthNumber, 0).getDate()
+    return {
+      ...stat,
+      from: `${stat.month}-01`,
+      to: `${stat.month}-${String(lastDay).padStart(2, '0')}`,
+      shortLabel: firstDay.toLocaleDateString('en-US', { month: 'short' }),
+      label: firstDay.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+    }
+  }),
+)
+
+// The busiest month fills the chart; the others are drawn relative to it
+const busiestMonth = computed(() => Math.max(1, ...months.value.map((month) => month.workouts_count)))
+
+// A month is selected when the date filters cover exactly that month
+const selectedMonth = computed(() =>
+  months.value.find((month) => month.from === from.value && month.to === to.value),
+)
+
+function workoutsLabel(count) {
+  return `${count} ${count === 1 ? 'workout' : 'workouts'}`
+}
+
+function formatMinutes(total) {
+  const hours = Math.floor(total / 60)
+  const minutes = total % 60
+  return hours > 0 ? `${hours} h ${minutes} min` : `${minutes} min`
+}
+
+function toggleMonth(month) {
+  const isSelected = selectedMonth.value?.month === month.month
+  from.value = isSelected ? '' : month.from
+  to.value = isSelected ? '' : month.to
+}
 
 function syncQuery() {
   const query = {}
@@ -91,6 +132,16 @@ onMounted(async () => {
   await loadWorkouts()
 })
 
+onMounted(async () => {
+  try {
+    const response = await api.get('/monthly-stats')
+    monthlyStats.value = response.data.data ?? response.data
+  } catch (error) {
+    // The list below still works without the chart
+    console.error('Failed to load monthly stats:', error)
+  }
+})
+
 watch(categoryId, () => {
   if (exerciseId.value && !exerciseOptions.value.some((e) => e.id === exerciseId.value)) {
     exerciseId.value = null
@@ -133,6 +184,38 @@ function totalSets(workout) {
 
 <template>
   <PageLayout title="History">
+    <v-card v-if="months.length > 0" color="surface" class="months">
+      <div class="months-head">
+        <h2 class="months-title">Workouts per month</h2>
+        <p class="months-summary" aria-live="polite">
+          <template v-if="selectedMonth">
+            {{ selectedMonth.label }} · {{ workoutsLabel(selectedMonth.workouts_count) }}
+            <template v-if="selectedMonth.total_minutes > 0"> · {{ formatMinutes(selectedMonth.total_minutes) }}</template>
+          </template>
+          <template v-else>Tap a month to see its workouts</template>
+        </p>
+      </div>
+
+      <div class="months-chart">
+        <button
+          v-for="month in months"
+          :key="month.month"
+          type="button"
+          class="month"
+          :class="{ selected: selectedMonth?.month === month.month, dimmed: selectedMonth && selectedMonth.month !== month.month }"
+          :aria-pressed="selectedMonth?.month === month.month"
+          :aria-label="`${month.label}: ${workoutsLabel(month.workouts_count)}`"
+          @click="toggleMonth(month)"
+        >
+          <span class="month-count">{{ month.workouts_count || '' }}</span>
+          <span class="month-track">
+            <span class="month-fill" :style="{ height: `${(month.workouts_count / busiestMonth) * 100}%` }"></span>
+          </span>
+          <span class="month-label">{{ month.shortLabel }}</span>
+        </button>
+      </div>
+    </v-card>
+
     <div class="filter-bar">
       <v-btn
         variant="outlined"
@@ -209,6 +292,103 @@ function totalSets(workout) {
 </template>
 
 <style scoped>
+.months {
+  padding: 16px 18px;
+}
+
+.months-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 12px;
+  margin-bottom: 12px;
+}
+
+.months-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.months-summary {
+  margin: 0;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+}
+
+.months-chart {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.month {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 4px 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.month:hover,
+.month.selected {
+  background: var(--color-surface-hover);
+}
+
+.month:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.month.dimmed {
+  opacity: 0.45;
+}
+
+.month-count {
+  height: 16px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.month-track {
+  display: flex;
+  align-items: flex-end;
+  width: 60%;
+  max-width: 22px;
+  height: 56px;
+  border-radius: 4px;
+  background: var(--color-surface-low);
+  overflow: hidden;
+}
+
+.month-fill {
+  width: 100%;
+  border-radius: 4px;
+  background: var(--color-accent);
+}
+
+.month-label {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.month.selected .month-label {
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
 .filters {
   display: flex;
   flex-direction: column;
