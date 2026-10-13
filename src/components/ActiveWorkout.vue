@@ -5,7 +5,7 @@ import api from '../services/api'
 import { elapsedSecondsBetween, formatElapsed } from '../utils/formatElapsed'
 import { formatReps, formatSet } from '../utils/formatSet'
 import { parseDecimal, parseReps, repsAsTyped } from '../utils/parseSet'
-import { mdiClipboardListOutline, mdiDeleteOutline } from '@mdi/js'
+import { mdiArrowLeft, mdiClipboardListOutline, mdiClose, mdiDeleteOutline } from '@mdi/js'
 import AmbientBackground from './ui/AmbientBackground.vue'
 import Avatar from './ui/Avatar.vue'
 import authStore from '../stores/auth'
@@ -39,6 +39,7 @@ const setInputs = ref({})
 const setErrors = ref({})
 const isRecordMoment = ref(false)
 const previousSets = ref({})
+const openCompoundIds = ref(new Set())
 const isPickerOpen = ref(false)
 const pickerError = ref('')
 const isTemplateOpen = ref(false)
@@ -97,6 +98,19 @@ const groupedExercises = computed(() => {
 })
 
 const noResults = computed(() => searchTerm.value !== '' && groupedExercises.value.length === 0)
+
+// Compound exercises: the muscle groups they work besides their own category, by exercise id
+const secondaryMuscles = computed(
+  () => new Map(exercises.value.map((e) => [e.id, (e.secondary_categories ?? []).map((c) => c.name)])),
+)
+
+function alsoWorks(workoutExercise) {
+  return secondaryMuscles.value.get(workoutExercise.exercise?.id) ?? []
+}
+
+function toggleCompound(workoutExerciseId) {
+  if (!openCompoundIds.value.delete(workoutExerciseId)) openCompoundIds.value.add(workoutExerciseId)
+}
 
 const addedExerciseIds = computed(() => new Set(workoutExercises.value.map((we) => we.exercise?.id)))
 
@@ -417,8 +431,15 @@ async function addSet(workoutExercise) {
     // Reps can be a range ("9-10") when the last one was a struggle
     const reps = isBlank(input.reps) ? suggestion : parseReps(input.reps)
 
-    if (weight == null || reps == null || Number.isNaN(weight)) {
-      setErrors.value[workoutExercise.id] = 'Enter the weight and the reps.'
+    const hasWeight = weight != null && !Number.isNaN(weight)
+
+    if (!hasWeight || reps == null) {
+      setErrors.value[workoutExercise.id] =
+        !hasWeight && reps == null
+          ? 'Enter the weight and the reps.'
+          : hasWeight
+            ? 'Enter the reps as a number or a range, like 9-10.'
+            : 'Enter the weight as a number, like 62.5.'
       return
     }
     logged = { weight, reps: reps.reps, reps_max: reps.reps_max }
@@ -478,29 +499,20 @@ onBeforeUnmount(() => {
     <AmbientBackground />
     <main class="container">
       <header class="topbar">
-        <button type="button" class="back" @click="goBack">← Back</button>
+        <button type="button" class="back" @click="goBack"><v-icon :icon="mdiArrowLeft" size="18" />Back</button>
 
-        <div v-if="workout" class="workout-actions">
-          <v-btn
-            :prepend-icon="mdiClipboardListOutline"
-            variant="outlined"
-            size="small"
-            :disabled="templateSaved || workoutExercises.length === 0"
-            @click="openTemplateDialog"
-          >
-            {{ templateSaved ? 'Template saved' : 'Save as template' }}
-          </v-btn>
-          <v-btn
-            :prepend-icon="mdiDeleteOutline"
-            variant="outlined"
-            size="small"
-            color="error"
-            aria-label="Delete workout"
-            @click="isDeleteOpen = true"
-          >
-            Delete
-          </v-btn>
-        </div>
+        <v-btn
+          v-if="workout"
+          class="delete-workout"
+          :prepend-icon="mdiDeleteOutline"
+          variant="outlined"
+          size="small"
+          color="error"
+          aria-label="Delete workout"
+          @click="isDeleteOpen = true"
+        >
+          Delete
+        </v-btn>
       </header>
 
       <!-- Stays in view while scrolling, so the timer and Stop are always one tap away -->
@@ -525,7 +537,21 @@ onBeforeUnmount(() => {
       <p v-if="errorMessage" class="error" role="alert">{{ errorMessage }}</p>
 
       <v-card v-if="workout" class="card" color="surface-bright" border>
-        <h2 class="section-title">Exercises</h2>
+        <header class="card-head">
+          <h2 class="section-title">Exercises</h2>
+          <!-- A quiet text button: it belongs to the list, but is not needed while logging sets -->
+          <v-btn
+            v-if="workoutExercises.length > 0"
+            class="save-template"
+            :prepend-icon="mdiClipboardListOutline"
+            variant="text"
+            size="small"
+            :disabled="templateSaved"
+            @click="openTemplateDialog"
+          >
+            {{ templateSaved ? 'Template saved' : 'Save as template' }}
+          </v-btn>
+        </header>
 
         <p v-if="workoutExercises.length === 0" class="muted empty">
           {{ isFinished ? 'No exercises were logged.' : 'No exercises yet. Add the first one to start logging sets.' }}
@@ -534,8 +560,23 @@ onBeforeUnmount(() => {
         <div v-for="we in workoutExercises" :key="we.id" class="exercise-block">
           <div class="exercise-head">
             <div class="exercise-info">
-              <p class="exercise-name">{{ we.exercise?.name }}</p>
-              <p class="muted small">{{ we.exercise?.category?.name }}</p>
+              <p class="exercise-name">
+                {{ we.exercise?.name }}
+                <button
+                  v-if="alsoWorks(we).length > 0"
+                  type="button"
+                  class="compound-btn"
+                  aria-label="Compound exercise: show the other muscle groups it works"
+                  :aria-expanded="openCompoundIds.has(we.id)"
+                  @click="toggleCompound(we.id)"
+                >
+                  C
+                </button>
+              </p>
+              <p class="muted small">
+                {{ we.exercise?.category?.name
+                }}<template v-if="openCompoundIds.has(we.id)"> · also {{ alsoWorks(we).join(', ') }}</template>
+              </p>
               <p v-if="lastTime(we.exercise.id)" class="last-time">
                 <span class="last-time-label">Last time · {{ lastTime(we.exercise.id).date }}</span>
                 {{ lastTime(we.exercise.id).sets }}
@@ -548,7 +589,7 @@ onBeforeUnmount(() => {
               aria-label="Delete exercise"
               @click="askRemoveExercise(we)"
             >
-              ✕
+              <v-icon :icon="mdiClose" size="18" />
             </button>
           </div>
 
@@ -563,7 +604,7 @@ onBeforeUnmount(() => {
                 aria-label="Delete set"
                 @click="askRemoveSet(we, set)"
               >
-                ✕
+                <v-icon :icon="mdiClose" size="18" />
               </button>
             </li>
           </ul>
@@ -780,6 +821,9 @@ onBeforeUnmount(() => {
 }
 
 .back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: none;
   border: none;
   color: var(--color-text-secondary);
@@ -794,11 +838,29 @@ onBeforeUnmount(() => {
   color: var(--color-text-primary);
 }
 
-.workout-actions {
+/* As tall as Stop and Finish below: a thumb has to hit these too */
+.delete-workout,
+.save-template {
+  height: 36px;
+}
+
+/* The title keeps its own line height; the button hangs into the card's padding so its label ends at the content edge */
+.card-head {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
+  min-height: 36px;
+  margin: -8px 0 0;
+}
+
+.card-head .section-title {
+  margin: 0;
+}
+
+.save-template {
+  margin-right: -12px;
+  color: var(--color-text-secondary);
 }
 
 .timer-bar {
@@ -934,6 +996,43 @@ onBeforeUnmount(() => {
   font-weight: 700;
 }
 
+/* Marks a compound exercise; the tap area reaches past the small circle */
+.compound-btn {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  /* No button padding, or the letter is pushed off-centre; the half pixel evens out the C's open side */
+  padding: 0 0.5px 0 0;
+  margin-left: 6px;
+  vertical-align: text-bottom;
+  background: none;
+  border: 1px solid var(--color-accent);
+  border-radius: 50%;
+  /* Blush, not the accent itself: a letter this small needs the contrast */
+  color: var(--color-accent-blush);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    color 0.2s var(--ease-out),
+    background 0.2s var(--ease-out);
+}
+
+.compound-btn::after {
+  content: '';
+  position: absolute;
+  inset: -10px;
+}
+
+.compound-btn[aria-expanded='true'] {
+  background: var(--color-accent);
+  color: var(--color-night-floor);
+}
+
 /* Read between sets: body-size, high-contrast numbers; only the label is quiet */
 .last-time {
   margin: 6px 0 0;
@@ -1024,6 +1123,7 @@ onBeforeUnmount(() => {
 /* As tall as the fields beside it */
 .add-set {
   height: 40px;
+  min-width: 64px;
   flex-shrink: 0;
 }
 

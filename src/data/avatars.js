@@ -1,19 +1,20 @@
 // Avatar drawings. The backend only stores the code (see App\Enums\Avatar), keep both lists in sync.
 //
 // Every avatar is a flat-vector head-and-shoulders portrait in a 64x64 viewBox, clipped to a
-// circle: plain fills, no outlines, and one soft shadow down the right half of the face.
+// circle: plain fills, no outlines, evenly lit (no shadow across the face).
 // The scene (background glow, "WT" tee, headband, face) is shared and drawn by avatarMarkup();
 // each character only supplies:
 //   bg    [inner, outer] background colours     skin  head colour     neck  neck colour
 //   back  drawn behind the body (ears, back hair, mane, spikes)
-//   head  optional replacement head shape, with its own `shade` (the right-half shadow)
-//   front drawn over the head, under the shadow, headband and face (hair, beard, muzzle)
+//   head  optional replacement head shape
+//   front drawn over the head, under the headband and face (hair, beard, muzzle)
+//   headband  false to leave the forehead bare (a hairstyle the band would hide)
 //   eyes  'human' (small dark ovals), 'led' (robot screen), 'socket' (skull); default round
 //   teeth true to draw a row of teeth instead of a mouth line (skeleton)
 //   eye / mouth / brow  optional colours for the face (default dark)
+//   tee   optional print for the shirt instead of "WT"; a ♥ in it is drawn as a red heart
 
 const DARK = '#2B1736'
-const SHADE = `fill="#1B0F26" opacity=".1"`
 
 const humanEars = (skin) =>
   `<circle cx="17.2" cy="32" r="3.2" fill="${skin}"/><circle cx="46.8" cy="32" r="3.2" fill="${skin}"/>`
@@ -69,6 +70,33 @@ export const avatars = [
       `<path d="M17.3 33Q18 47.3 32 47.3T46.7 33Q44.6 36.2 42.6 36.6Q41 44.6 32 44.6T21.4 36.6Q19.4 36.2 17.3 33z" fill="#1E1512"/>` +
       `<path d="M26.4 38.2q5.6-2.8 11.2 0q-5.6-.8-11.2 0z" fill="#1E1512"/>` +
       nose('#8F5334'),
+  },
+  {
+    code: 'marian',
+    name: 'Marian',
+    bg: ['#FDA4AF', '#BE123C'],
+    skin: '#9C6038',
+    neck: '#7E4A28',
+    eyes: 'human',
+    brow: '#241812',
+    mouth: '#4A1F1A',
+    tee: 'I ♥ IRIS',
+    headband: false,
+    back:
+      // a full head of hair in two lobes that rise from the middle part and fall to the sides
+      `<path d="M12.8 31Q8.4 9.6 22 7.4Q29.4 6.4 32 10.4Q34.6 6.4 42 7.4Q55.6 9.6 51.2 31z" fill="#3A2A22"/>` +
+      humanEars('#9C6038'),
+    front:
+      // middle part: the hairline starts high at the parting and sweeps down to the temples,
+      // leaving the forehead open
+      `<path d="M32 15.3Q17 15.3 17 31Q18.8 31.4 19.7 29.2Q21.4 21.2 32 18.2z" fill="#3A2A22"/>` +
+      `<path d="M32 15.3Q47 15.3 47 31Q45.2 31.4 44.3 29.2Q42.6 21.2 32 18.2z" fill="#3A2A22"/>` +
+      // the parting itself, and blond streaks combed away from it on each side
+      `<path d="M32 10.6V18.2" fill="none" stroke="#1C120E" stroke-width="1" stroke-linecap="round"/>` +
+      `<path d="M30.8 12.2Q24.5 11.6 19.8 18M33.2 12.2Q39.5 11.6 44.2 18M30.2 16.4Q23.6 17.4 19.8 24.6M33.8 16.4Q40.4 17.4 44.2 24.6M27 9.6Q20.6 10.4 16.6 17M37 9.6Q43.4 10.4 47.4 17" fill="none" stroke="#F4C534" stroke-width="1.3" stroke-linecap="round"/>` +
+      // a small, quiet goatee: just the tip of the chin
+      `<path d="M29.9 44.3Q32 43.6 34.1 44.3Q34.3 46.6 32 46.8Q29.7 46.6 29.9 44.3z" fill="#3A2A22" opacity=".8"/>` +
+      nose('#7A4526'),
   },
   {
     code: 'grandpa',
@@ -146,7 +174,6 @@ export const avatars = [
       `<circle cx="32" cy="8.4" r="3.2" fill="#FFD23F"/>` +
       `<rect x="13.4" y="26.5" width="5" height="9" rx="2" fill="#97A5BD"/><rect x="45.6" y="26.5" width="5" height="9" rx="2" fill="#97A5BD"/>`,
     head: `<rect x="17" y="16" width="30" height="30.5" rx="8.5" fill="#DCE4F0"/>`,
-    shade: `<path d="M32 16h6.5a8.5 8.5 0 0 1 8.5 8.5v13.5a8.5 8.5 0 0 1-8.5 8.5H32z" ${SHADE}/>`,
     front:
       `<rect x="20.3" y="25.6" width="23.4" height="11.4" rx="5.4" fill="#12293A"/>` +
       `<circle cx="21.8" cy="41.6" r="1.1" fill="#97A5BD"/><circle cx="42.2" cy="41.6" r="1.1" fill="#97A5BD"/>`,
@@ -187,7 +214,6 @@ export const avatars = [
     back: '',
     // round cranium narrowing into a squarer jaw
     head: `<path d="M32 15.6c9 0 15 6.2 15 14.6c0 4.4-1.6 7.4-4 9.6v3.4c0 2.2-1.8 3.8-4 3.8H25c-2.2 0-4-1.6-4-3.8v-3.4c-2.4-2.2-4-5.2-4-9.6c0-8.4 6-14.6 15-14.6z" fill="#F1EDE2"/>`,
-    shade: `<path d="M32 15.6c9 0 15 6.2 15 14.6c0 4.4-1.6 7.4-4 9.6v3.4c0 2.2-1.8 3.8-4 3.8H32z" ${SHADE}/>`,
     front: `<path d="M32 34.8l-2 3.6q2 1 4 0z" fill="#2B2530"/>`,
   },
 ]
@@ -294,6 +320,38 @@ function mouthAndExtras(avatar, expression) {
   return line('M28 39.8q4 3.2 8 0', mouth, 1.6)
 }
 
+// Rough advance widths of Nunito's heavy capitals, in ems: enough to centre a short print
+const printWidth = (text, size) => [...text].reduce((sum, char) => sum + (char === 'I' ? 0.31 : char === ' ' ? 0.26 : 0.66), 0) * size
+
+/**
+ * What is printed on the shirt, centred on x with its baseline on y: "WT", or the avatar's own
+ * `tee`, where a ♥ becomes a drawn heart. Shared by the round portrait and the full body.
+ */
+export function teePrint(avatar, x, y, size) {
+  // An avatar's own print is the point of its shirt: white with a dark edge, so it reads at any size
+  const paint = avatar.tee
+    ? `font-weight="900" fill="#FFFFFF" stroke="#3B1F52" stroke-width="${(size * 0.12).toFixed(2)}" paint-order="stroke" stroke-linejoin="round"`
+    : `font-weight="800" fill="#FFD1EC"`
+  const text = (content, tx, anchor) =>
+    `<text x="${tx.toFixed(2)}" y="${y}" text-anchor="${anchor}" font-size="${size}" ${paint} font-family="Nunito, sans-serif">${content}</text>`
+
+  if (!avatar.tee?.includes('♥')) return text(avatar.tee ?? 'WT', x, 'middle')
+
+  const [before, after] = avatar.tee.split('♥').map((part) => part.trim())
+  const h = 0.95 * size
+  const gap = 0.24 * size
+  const left = x - (printWidth(before, size) + printWidth(after, size) + h + 2 * gap) / 2
+  const cx = left + printWidth(before, size) + gap + h / 2
+  const cy = y - 0.36 * size
+  const p = (dx, dy) => `${(cx + dx * h).toFixed(2)} ${(cy + dy * h).toFixed(2)}`
+
+  return (
+    text(before, cx - h / 2 - gap, 'end') +
+    `<path d="M${p(0, 0.44)}C${p(-0.62, 0.04)} ${p(-0.38, -0.54)} ${p(0, -0.2)}C${p(0.38, -0.54)} ${p(0.62, 0.04)} ${p(0, 0.44)}z" fill="#FF4D6D" stroke="#3B1F52" stroke-width="${(size * 0.12).toFixed(2)}" paint-order="stroke" stroke-linejoin="round"/>` +
+    text(after, cx + h / 2 + gap, 'start')
+  )
+}
+
 /**
  * Head, hair/muzzle, headband and face, in the 64x64 portrait space (head centred on 32,31).
  * `avatar.back` is not included: it has to be drawn first, behind the body. Shared by the round
@@ -301,16 +359,17 @@ function mouthAndExtras(avatar, expression) {
  */
 export function avatarHeadMarkup(avatar, expression = 'normal') {
   const head = avatar.head ?? `<ellipse cx="32" cy="31" rx="15" ry="15.4" fill="${avatar.skin}"/>`
-  const shade = avatar.shade ?? `<path d="M32 15.6a15 15.4 0 0 1 0 30.8z" ${SHADE}/>`
+  const headband =
+    avatar.headband === false
+      ? ''
+      : // a knot on the side, then the band
+        `<path d="M45.4 21.8l5.6-2.6-1.2 4 3.8 2.4-7.2-.2z" fill="#D11480"/>` +
+        `<path d="M17.8 24.8Q32 19.2 46.2 24.8L43.7 19.5Q32 15.7 20.3 19.5z" fill="#FF3FA4"/>`
 
   return (
     head +
     avatar.front +
-    shade +
-    // headband with a knot on the side, its right half in the same shadow as the face
-    `<path d="M45.4 21.8l5.6-2.6-1.2 4 3.8 2.4-7.2-.2z" fill="#D11480"/>` +
-    `<path d="M17.8 24.8Q32 19.2 46.2 24.8L43.7 19.5Q32 15.7 20.3 19.5z" fill="#FF3FA4"/>` +
-    `<path d="M32 22V17.6Q38 17.6 43.7 19.5L46.2 24.8Q39 22 32 22z" fill="#1B0F26" opacity=".14"/>` +
+    headband +
     eyes(avatar, expression) +
     mouthAndExtras(avatar, expression)
   )
@@ -334,9 +393,8 @@ export function avatarMarkup(avatar, expression = 'normal', uid = 'avatar') {
     `<rect x="27.4" y="42" width="9.2" height="10" fill="${avatar.neck}"/>` +
     `<path d="M27.4 45.6q4.6 3 9.2 0v-3.6h-9.2z" fill="#1B0F26" opacity=".14"/>` +
     `<path d="M7 67Q8 48.6 32 48.6T57 67z" fill="#6B3E8C"/>` +
-    `<path d="M32 48.6Q56 48.6 57 67H32z" fill="#1B0F26" opacity=".12"/>` +
     `<path d="M26.4 49Q32 55 37.6 49z" fill="${avatar.neck}"/>` +
-    `<text x="32" y="59.8" text-anchor="middle" font-size="6" font-weight="800" fill="#FFD1EC" font-family="Nunito, sans-serif">WT</text>` +
+    teePrint(avatar, 32, avatar.tee ? 59.5 : 59.8, avatar.tee ? 5.4 : 6) +
     avatarHeadMarkup(avatar, expression) +
     `</g>` +
     `<circle cx="32" cy="32" r="31" fill="none" stroke="#FFFFFF" stroke-width="2"/>`

@@ -50,6 +50,14 @@
 
 html {
   -webkit-tap-highlight-color: transparent;
+  caret-color: var(--color-accent);
+  /* Scrollbars of lists and dialogs in the plum of the surfaces, not the browser's grey */
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+
+::selection {
+  background: var(--color-accent-deep);
+  color: var(--color-text-primary);
 }
 
 /* No double-tap-to-zoom delay on anything tappable */

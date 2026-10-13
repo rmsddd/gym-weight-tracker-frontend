@@ -5,7 +5,7 @@
 //   chest, back, shoulders, traps, biceps, triceps, forearms, abs, legs
 // Everything is drawn in a 120x184 viewBox, facing the viewer, arms hanging at the sides.
 
-import { avatarHeadMarkup } from './avatars.js'
+import { avatarHeadMarkup, teePrint } from './avatars.js'
 
 const INK = '#2B1736'
 const TANK = '#6B3E8C'
@@ -101,10 +101,15 @@ export function avatarBodyMarkup(avatar, levels = {}, uid = 'body', expression =
   }
   const pecs = chest > 0 ? pec(-1) + pec(1) : ''
 
+  // An avatar with its own print keeps it on show: the abs are then inked only below it
+  const printY = chest > 0 ? 98 : 92
+  const absTop = avatar.tee ? printY + 2.5 : chest > 0 ? 90 : 86
+
   const absLines =
     abs > 0
-      ? `<path d="M60 ${chest > 0 ? 90 : 86}V108${[93.5, 99, 104.5]
+      ? `<path d="M60 ${absTop}V108${[93.5, 99, 104.5]
           .slice(0, abs)
+          .filter((y) => y > absTop)
           .map((y) => `M53.8 ${y}Q60 ${y + 1.4} 66.2 ${y}`)
           .join('')}" fill="none" stroke="${TANK_DARK}" stroke-width="1.3" stroke-linecap="round"/>`
       : ''
@@ -130,7 +135,7 @@ export function avatarBodyMarkup(avatar, levels = {}, uid = 'body', expression =
     tank +
     pecs +
     absLines +
-    (abs > 0 ? "" : `<text x="60" y="${chest > 0 ? 98 : 92}" text-anchor="middle" font-size="5.4" font-weight="800" fill="#FFD1EC" font-family="Nunito, sans-serif">WT</text>`) +
+    (abs > 0 && !avatar.tee ? '' : teePrint(avatar, 60, printY, avatar.tee ? 5.6 : 5.4)) +
     shorts +
     `<g transform="${headTransform}">${avatarHeadMarkup(avatar, expression)}</g>`
   )
