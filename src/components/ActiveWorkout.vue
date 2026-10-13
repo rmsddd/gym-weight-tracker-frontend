@@ -3,7 +3,8 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../services/api'
 import { elapsedSecondsBetween, formatElapsed } from '../utils/formatElapsed'
-import { formatSet } from '../utils/formatSet'
+import { formatReps, formatSet } from '../utils/formatSet'
+import { parseDecimal, parseReps, repsAsTyped } from '../utils/parseSet'
 import { mdiClipboardListOutline, mdiDeleteOutline } from '@mdi/js'
 import AmbientBackground from './ui/AmbientBackground.vue'
 import Avatar from './ui/Avatar.vue'
@@ -175,12 +176,15 @@ function suggestedSet(workoutExercise) {
   if (isTimed(workoutExercise)) {
     return match.duration_minutes != null ? { duration: Number(match.duration_minutes) } : null
   }
-  return match.weight != null ? { weight: Number(match.weight), reps: Number(match.reps) } : null
+  return match.weight != null
+    ? { weight: Number(match.weight), reps: Number(match.reps), reps_max: match.reps_max ?? null }
+    : null
 }
 
 function setPlaceholder(workoutExercise, field) {
   const suggestion = suggestedSet(workoutExercise)
-  return suggestion ? String(suggestion[field]) : ''
+  if (!suggestion) return ''
+  return field === 'reps' ? formatReps(suggestion) : String(suggestion[field])
 }
 
 function formatShortDate(dateString) {
@@ -401,7 +405,7 @@ async function addSet(workoutExercise) {
   let logged
 
   if (isTimed(workoutExercise)) {
-    const duration = isBlank(input.duration) ? suggestion?.duration : Number(input.duration)
+    const duration = isBlank(input.duration) ? suggestion?.duration : parseDecimal(input.duration)
 
     if (duration == null || Number.isNaN(duration) || duration <= 0) {
       setErrors.value[workoutExercise.id] = 'Enter the minutes.'
@@ -409,14 +413,15 @@ async function addSet(workoutExercise) {
     }
     logged = { duration }
   } else {
-    const weight = isBlank(input.weight) ? suggestion?.weight : Number(input.weight)
-    const reps = isBlank(input.reps) ? suggestion?.reps : Number(input.reps)
+    const weight = isBlank(input.weight) ? suggestion?.weight : parseDecimal(input.weight)
+    // Reps can be a range ("9-10") when the last one was a struggle
+    const reps = isBlank(input.reps) ? suggestion : parseReps(input.reps)
 
-    if (weight == null || reps == null || Number.isNaN(weight) || Number.isNaN(reps)) {
+    if (weight == null || reps == null || Number.isNaN(weight)) {
       setErrors.value[workoutExercise.id] = 'Enter the weight and the reps.'
       return
     }
-    logged = { weight, reps }
+    logged = { weight, reps: reps.reps, reps_max: reps.reps_max }
   }
   setErrors.value[workoutExercise.id] = ''
   savingSetFor.add(workoutExercise.id)
@@ -567,10 +572,7 @@ onBeforeUnmount(() => {
             <v-text-field
               v-if="isTimed(we)"
               v-model="setInputs[we.id].duration"
-              type="number"
               inputmode="decimal"
-              min="0"
-              step="0.5"
               suffix="min"
               persistent-placeholder
               aria-label="Duration in minutes"
@@ -580,13 +582,11 @@ onBeforeUnmount(() => {
               density="compact"
               hide-details
             />
+            <!-- Text fields, not number ones: a number field drops "62,5" and "9-10" -->
             <template v-else>
               <v-text-field
                 v-model="setInputs[we.id].weight"
-                type="number"
                 inputmode="decimal"
-                min="0"
-                step="0.5"
                 suffix="kg"
                 persistent-placeholder
                 aria-label="Weight in kg"
@@ -597,11 +597,10 @@ onBeforeUnmount(() => {
                 hide-details
               />
               <v-text-field
-                v-model="setInputs[we.id].reps"
-                type="number"
-                inputmode="numeric"
-                min="0"
+                :model-value="setInputs[we.id].reps"
+                inputmode="decimal"
                 suffix="reps"
+                @update:model-value="setInputs[we.id].reps = repsAsTyped($event)"
                 persistent-placeholder
                 aria-label="Reps"
                 autocomplete="off"

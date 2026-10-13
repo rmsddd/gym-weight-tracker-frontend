@@ -56,8 +56,13 @@ const last30DaysWorkouts = computed(() => {
   return sortedWorkouts.value.filter((workout) => new Date(workout.date) >= cutoff)
 })
 
+// A workout shorter than this was started by mistake or abandoned, so it would only skew the average
+const MIN_AVERAGED_MINUTES = 5
+
 const averageDuration = computed(() => {
-  const withDuration = last30DaysWorkouts.value.filter((w) => w.duration_minutes != null)
+  const withDuration = last30DaysWorkouts.value.filter(
+    (w) => w.duration_minutes != null && Number(w.duration_minutes) >= MIN_AVERAGED_MINUTES,
+  )
   if (withDuration.length === 0) return null
 
   const total = withDuration.reduce((sum, w) => sum + Number(w.duration_minutes), 0)
