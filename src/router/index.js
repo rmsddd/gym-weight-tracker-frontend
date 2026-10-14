@@ -12,6 +12,9 @@ const ProfilePage = () => import('../components/ProfilePage.vue')
 const HistoryPage = () => import('../components/HistoryPage.vue')
 const TemplatesPage = () => import('../components/TemplatesPage.vue')
 const NotFoundPage = () => import('../components/NotFoundPage.vue')
+const ForgotPasswordPage = () => import('../components/ForgotPasswordPage.vue')
+const ResetPasswordPage = () => import('../components/ResetPasswordPage.vue')
+const VerifyEmailPage = () => import('../components/VerifyEmailPage.vue')
 
 const router = createRouter({
   history: createWebHistory(),
@@ -19,10 +22,34 @@ const router = createRouter({
     { path: '/', redirect: '/dashboard' },
     { path: '/login', name: 'login', component: LoginForm, meta: { guestOnly: true } },
     { path: '/register', name: 'register', component: RegisterForm, meta: { guestOnly: true } },
+    {
+      path: '/forgot-password',
+      name: 'forgot-password',
+      component: ForgotPasswordPage,
+      meta: { guestOnly: true },
+    },
+    // Opened from links in emails, logged in or not: the pages handle both cases
+    {
+      path: '/reset-password',
+      name: 'reset-password',
+      component: ResetPasswordPage,
+      meta: { public: true },
+    },
+    {
+      path: '/verify-email',
+      name: 'verify-email',
+      component: VerifyEmailPage,
+      meta: { public: true },
+    },
     { path: '/dashboard', name: 'dashboard', component: Dashboard, meta: { requiresAuth: true } },
     { path: '/records', name: 'records', component: PersonalRecords, meta: { requiresAuth: true } },
     { path: '/history', name: 'history', component: HistoryPage, meta: { requiresAuth: true } },
-    { path: '/templates', name: 'templates', component: TemplatesPage, meta: { requiresAuth: true } },
+    {
+      path: '/templates',
+      name: 'templates',
+      component: TemplatesPage,
+      meta: { requiresAuth: true },
+    },
     { path: '/profile', name: 'profile', component: ProfilePage, meta: { requiresAuth: true } },
     {
       path: '/workouts/new',
@@ -36,7 +63,12 @@ const router = createRouter({
       component: ActiveWorkout,
       meta: { requiresAuth: true },
     },
-    { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundPage, meta: { public: true } },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: NotFoundPage,
+      meta: { public: true },
+    },
   ],
 })
 
@@ -57,6 +89,11 @@ router.beforeEach(async (to) => {
 
   if (to.meta.guestOnly && isAuthenticated) {
     return { name: 'dashboard' }
+  }
+
+  // Until the email is confirmed the API refuses everything else, so only that screen is shown
+  if (!isOpen && !authStore.state.user.email_verified_at) {
+    return { name: 'verify-email' }
   }
 
   return true

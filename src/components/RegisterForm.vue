@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import authStore from '../stores/auth'
 import AmbientBackground from './ui/AmbientBackground.vue'
@@ -14,9 +14,17 @@ const email = ref('')
 const password = ref('')
 const passwordConfirmation = ref('')
 const errorMessage = ref('')
+// What the server says is wrong with each field, shown under that field
+const fieldErrors = ref({})
+
+// A message stops applying as soon as the field it is about changes
+watch(name, () => delete fieldErrors.value.name)
+watch(email, () => delete fieldErrors.value.email)
+watch([password, passwordConfirmation], () => delete fieldErrors.value.password)
 
 async function handleRegister() {
   errorMessage.value = ''
+  fieldErrors.value = {}
 
   try {
     await authStore.register({
@@ -26,9 +34,20 @@ async function handleRegister() {
       password_confirmation: passwordConfirmation.value,
     })
 
-    router.push('/dashboard')
+    // The account works only after the link in the confirmation email is opened
+    router.push('/verify-email')
   } catch (error) {
-    errorMessage.value = 'Could not create the account. Check the details you entered.'
+    const status = error.response?.status
+    const errors = error.response?.data?.errors
+    if (status === 422 && errors) {
+      fieldErrors.value = {
+        name: errors.name?.[0],
+        email: errors.email?.[0],
+        password: errors.password?.[0],
+      }
+    } else if (status === 429)
+      errorMessage.value = 'Too many attempts. Wait a minute and try again.'
+    else errorMessage.value = 'Could not create the account. Check your connection and try again.'
     console.error('Registration error:', error)
   }
 }
@@ -39,8 +58,24 @@ async function handleRegister() {
     <AmbientBackground />
 
     <FormCard title="Gym Weight Tracker" @submit.prevent="handleRegister">
-      <UnderlineField id="name" v-model="name" label="Name" type="text" required autocomplete="name" />
-      <UnderlineField id="email" v-model="email" label="Email" type="email" required autocomplete="email" />
+      <UnderlineField
+        id="name"
+        v-model="name"
+        label="Name"
+        type="text"
+        required
+        autocomplete="name"
+        :error-messages="fieldErrors.name"
+      />
+      <UnderlineField
+        id="email"
+        v-model="email"
+        label="Email"
+        type="email"
+        required
+        autocomplete="email"
+        :error-messages="fieldErrors.email"
+      />
       <UnderlineField
         id="password"
         v-model="password"
@@ -48,6 +83,7 @@ async function handleRegister() {
         type="password"
         required
         autocomplete="new-password"
+        :error-messages="fieldErrors.password"
       />
       <UnderlineField
         id="password_confirmation"

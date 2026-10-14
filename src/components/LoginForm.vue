@@ -34,7 +34,8 @@ async function handleLogin() {
     // Only a 422 means the credentials are wrong; say what actually happened otherwise
     const status = error.response?.status
     const errors = error.response?.data?.errors
-    if (status === 422 && errors) fieldErrors.value = { email: errors.email?.[0], password: errors.password?.[0] }
+    if (status === 422 && errors)
+      fieldErrors.value = { email: errors.email?.[0], password: errors.password?.[0] }
     else if (status === 422) errorMessage.value = 'Incorrect email or password.'
     else if (status === 429) errorMessage.value = 'Too many attempts. Wait a minute and try again.'
     else errorMessage.value = 'Could not log in. Check your connection and try again.'
@@ -67,6 +68,12 @@ async function handleLogin() {
         :error-messages="fieldErrors.password"
       />
 
+      <p class="forgot">
+        <a href="#" class="switch-link" @click.prevent="router.push('/forgot-password')"
+          >Forgot password?</a
+        >
+      </p>
+
       <BaseButton type="submit" size="lg" block class="submit">Log in</BaseButton>
 
       <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
@@ -93,6 +100,16 @@ async function handleLogin() {
 
 .submit {
   margin-top: 4px;
+}
+
+.forgot {
+  margin: -4px 0 14px;
+  text-align: right;
+  font-size: 14px;
+}
+
+.forgot .switch-link {
+  margin-left: 0;
 }
 
 .error {
