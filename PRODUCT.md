@@ -20,7 +20,7 @@ Gym Weight Tracker records workouts: the exercises of a session and, for each se
 and reps (or the minutes, for timed exercises such as planks and cardio).
 
 Success is a set logged in a few seconds without breaking the rhythm of the workout, and a
-user who can tell at a glance whether they are doing better than last time.
+user who can tell at a glance whether they're doing better than last time.
 
 ## Positioning
 
@@ -52,15 +52,15 @@ Two things come first, ahead of any other feature:
 - **Personal records** per exercise, with a celebration moment when one is beaten mid-workout.
 - **Dashboard:** workouts in the last 30 days, last workout, average duration (workouts under
   5 minutes are left out of the average), recent workouts, the workout in progress.
-- **Templates, history with monthly stats, profile with a chosen avatar.**
+- **Also:** templates, history with monthly stats, a profile with a chosen avatar.
 - **Terminology in the UI:** workout, exercise, set, reps, template, personal record, "Last time".
-- **Units:** kilograms and minutes only. Pounds are not supported.
+- **Units:** kilograms and minutes only. Pounds aren't supported.
 - **Undecided:** whether the app will be installable (PWA) or stay a website; any monetisation.
 
 ## Brand Commitments
 
-- The name is **Gym Weight Tracker**.
-- The interface is in **English**.
+- **Name:** Gym Weight Tracker.
+- **Interface language:** English.
 - **Phone first:** every screen is designed for a phone held in one hand; desktop is secondary.
 
 ## Evidence on Hand
