@@ -5,7 +5,8 @@ import api from '../services/api'
 import { elapsedSecondsBetween, formatElapsed } from '../utils/formatElapsed'
 import { formatReps, formatSet } from '../utils/formatSet'
 import { parseDecimal, parseReps, repsAsTyped } from '../utils/parseSet'
-import { mdiArrowLeft, mdiClipboardListOutline, mdiClose, mdiDeleteOutline } from '@mdi/js'
+import { mdiArrowLeft, mdiClipboardListOutline, mdiClose, mdiDeleteOutline, mdiDragVertical } from '@mdi/js'
+import { VueDraggable } from 'vue-draggable-plus'
 import AmbientBackground from './ui/AmbientBackground.vue'
 import Avatar from './ui/Avatar.vue'
 import authStore from '../stores/auth'
@@ -436,6 +437,26 @@ async function deleteCustomExercise() {
   }
 }
 
+// The order before a drag, to put back if the new one cannot be saved
+let orderBeforeDrag = []
+
+function rememberOrder() {
+  orderBeforeDrag = [...workoutExercises.value]
+}
+
+async function saveOrder() {
+  const ids = workoutExercises.value.map((we) => we.id)
+  if (ids.every((id, index) => id === orderBeforeDrag[index]?.id)) return
+
+  errorMessage.value = ''
+  try {
+    await api.put(`/workouts/${workoutId}/exercise-order`, { ids })
+  } catch (error) {
+    workoutExercises.value = orderBeforeDrag
+    setError('Could not save the new order.', error)
+  }
+}
+
 async function removeExercise(workoutExercise) {
   try {
     await api.delete(`/workouts/${workoutId}/exercises/${workoutExercise.id}`)
@@ -594,104 +615,124 @@ onBeforeUnmount(() => {
           {{ isFinished ? 'No exercises were logged.' : 'No exercises yet. Add the first one to start logging sets.' }}
         </p>
 
-        <div v-for="we in workoutExercises" :key="we.id" class="exercise-block">
-          <div class="exercise-head">
-            <div class="exercise-info">
-              <p class="exercise-name">
-                {{ we.exercise?.name }}
-                <button
-                  v-if="alsoWorks(we).length > 0"
-                  type="button"
-                  class="compound-btn"
-                  aria-label="Compound exercise: show the other muscle groups it works"
-                  :aria-expanded="openCompoundIds.has(we.id)"
-                  @click="toggleCompound(we.id)"
-                >
-                  C
-                </button>
-              </p>
-              <p class="muted small">
-                {{ we.exercise?.category?.name
-                }}<template v-if="openCompoundIds.has(we.id)"> · also {{ alsoWorks(we).join(', ') }}</template>
-              </p>
-              <p v-if="lastTime(we.exercise.id)" class="last-time">
-                <span class="last-time-label">Last time · {{ lastTime(we.exercise.id).date }}</span>
-                {{ lastTime(we.exercise.id).sets }}
-              </p>
-            </div>
-            <button
-              v-if="!isFinished"
-              type="button"
-              class="icon-btn"
-              aria-label="Delete exercise"
-              @click="askRemoveExercise(we)"
-            >
-              <v-icon :icon="mdiClose" size="18" />
-            </button>
-          </div>
-
-          <ul v-if="we.sets.length > 0" class="sets">
-            <li v-for="(set, index) in we.sets" :key="set.id">
-              <span class="set-number">Set {{ index + 1 }}</span>
-              <span>{{ formatSet(set) }}</span>
+        <!-- Dragged by the handle only, so scrolling and typing in the set fields work as usual -->
+        <VueDraggable
+          v-model="workoutExercises"
+          handle=".drag-handle"
+          :disabled="isFinished"
+          :animation="150"
+          ghost-class="exercise-ghost"
+          chosen-class="exercise-chosen"
+          @start="rememberOrder"
+          @end="saveOrder"
+        >
+          <div v-for="we in workoutExercises" :key="we.id" class="exercise-block">
+            <div class="exercise-head">
+              <button
+                v-if="!isFinished && workoutExercises.length > 1"
+                type="button"
+                class="drag-handle"
+                aria-label="Drag to change the order"
+              >
+                <v-icon :icon="mdiDragVertical" size="20" />
+              </button>
+              <div class="exercise-info">
+                <p class="exercise-name">
+                  {{ we.exercise?.name }}
+                  <button
+                    v-if="alsoWorks(we).length > 0"
+                    type="button"
+                    class="compound-btn"
+                    aria-label="Compound exercise: show the other muscle groups it works"
+                    :aria-expanded="openCompoundIds.has(we.id)"
+                    @click="toggleCompound(we.id)"
+                  >
+                    C
+                  </button>
+                </p>
+                <p class="muted small">
+                  {{ we.exercise?.category?.name
+                  }}<template v-if="openCompoundIds.has(we.id)"> · also {{ alsoWorks(we).join(', ') }}</template>
+                </p>
+                <p v-if="lastTime(we.exercise.id)" class="last-time">
+                  <span class="last-time-label">Last time · {{ lastTime(we.exercise.id).date }}</span>
+                  {{ lastTime(we.exercise.id).sets }}
+                </p>
+              </div>
               <button
                 v-if="!isFinished"
                 type="button"
                 class="icon-btn"
-                aria-label="Delete set"
-                @click="askRemoveSet(we, set)"
+                aria-label="Delete exercise"
+                @click="askRemoveExercise(we)"
               >
                 <v-icon :icon="mdiClose" size="18" />
               </button>
-            </li>
-          </ul>
-
-          <form v-if="!isFinished" class="set-form" novalidate @submit.prevent="addSet(we)">
-            <v-text-field
-              v-if="isTimed(we)"
-              v-model="setInputs[we.id].duration"
-              inputmode="decimal"
-              suffix="min"
-              persistent-placeholder
-              aria-label="Duration in minutes"
-              autocomplete="off"
-              :name="`duration-${we.id}`"
-              :placeholder="setPlaceholder(we, 'duration')"
-              density="compact"
-              hide-details
-            />
-            <!-- Text fields, not number ones: a number field drops "62,5" and "9-10" -->
-            <template v-else>
+            </div>
+  
+            <ul v-if="we.sets.length > 0" class="sets">
+              <li v-for="(set, index) in we.sets" :key="set.id">
+                <span class="set-number">Set {{ index + 1 }}</span>
+                <span>{{ formatSet(set) }}</span>
+                <button
+                  v-if="!isFinished"
+                  type="button"
+                  class="icon-btn"
+                  aria-label="Delete set"
+                  @click="askRemoveSet(we, set)"
+                >
+                  <v-icon :icon="mdiClose" size="18" />
+                </button>
+              </li>
+            </ul>
+  
+            <form v-if="!isFinished" class="set-form" novalidate @submit.prevent="addSet(we)">
               <v-text-field
-                v-model="setInputs[we.id].weight"
+                v-if="isTimed(we)"
+                v-model="setInputs[we.id].duration"
                 inputmode="decimal"
-                suffix="kg"
+                suffix="min"
                 persistent-placeholder
-                aria-label="Weight in kg"
+                aria-label="Duration in minutes"
                 autocomplete="off"
-                :name="`weight-${we.id}`"
-                :placeholder="setPlaceholder(we, 'weight')"
+                :name="`duration-${we.id}`"
+                :placeholder="setPlaceholder(we, 'duration')"
                 density="compact"
                 hide-details
               />
-              <v-text-field
-                :model-value="setInputs[we.id].reps"
-                inputmode="decimal"
-                suffix="reps"
-                @update:model-value="setInputs[we.id].reps = repsAsTyped($event)"
-                persistent-placeholder
-                aria-label="Reps"
-                autocomplete="off"
-                :name="`reps-${we.id}`"
-                :placeholder="setPlaceholder(we, 'reps')"
-                density="compact"
-                hide-details
-              />
-            </template>
-            <BaseButton type="submit" size="sm" class="add-set">+ Set</BaseButton>
-          </form>
-          <p v-if="setErrors[we.id]" class="error set-error" role="alert">{{ setErrors[we.id] }}</p>
-        </div>
+              <!-- Text fields, not number ones: a number field drops "62,5" and "9-10" -->
+              <template v-else>
+                <v-text-field
+                  v-model="setInputs[we.id].weight"
+                  inputmode="decimal"
+                  suffix="kg"
+                  persistent-placeholder
+                  aria-label="Weight in kg"
+                  autocomplete="off"
+                  :name="`weight-${we.id}`"
+                  :placeholder="setPlaceholder(we, 'weight')"
+                  density="compact"
+                  hide-details
+                />
+                <v-text-field
+                  :model-value="setInputs[we.id].reps"
+                  inputmode="decimal"
+                  suffix="reps"
+                  @update:model-value="setInputs[we.id].reps = repsAsTyped($event)"
+                  persistent-placeholder
+                  aria-label="Reps"
+                  autocomplete="off"
+                  :name="`reps-${we.id}`"
+                  :placeholder="setPlaceholder(we, 'reps')"
+                  density="compact"
+                  hide-details
+                />
+              </template>
+              <BaseButton type="submit" size="sm" class="add-set">+ Set</BaseButton>
+            </form>
+            <p v-if="setErrors[we.id]" class="error set-error" role="alert">{{ setErrors[we.id] }}</p>
+          </div>
+        </VueDraggable>
 
         <BaseButton
           v-if="!isFinished"
@@ -1044,7 +1085,41 @@ onBeforeUnmount(() => {
 }
 
 .exercise-info {
+  flex: 1;
   min-width: 0;
+}
+
+/* Grabbed with a thumb: a full 36px target, and no page scroll when a drag starts on it */
+.drag-handle {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 36px;
+  margin: -6px 0 -6px -6px;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  border-radius: var(--radius-field);
+  color: var(--color-text-muted);
+  cursor: grab;
+  touch-action: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+  color: var(--color-accent-blush);
+}
+
+/* The exercise being moved, lifted off the list */
+.exercise-chosen {
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-panel);
+}
+
+/* Where it will land */
+.exercise-ghost {
+  opacity: 0.4;
 }
 
 .exercise-name {
