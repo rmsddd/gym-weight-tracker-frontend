@@ -51,7 +51,12 @@ const groupedExercises = computed(() => {
   const term = normalize(searchTerm.value)
   const groups = new Map()
 
-  for (const exercise of exercises.value) {
+  // Categories in their catalog order, the exercises of each alphabetically so they are easy to find
+  const sorted = [...exercises.value].sort(
+    (a, b) => (a.category?.id ?? Infinity) - (b.category?.id ?? Infinity) || a.name.localeCompare(b.name),
+  )
+
+  for (const exercise of sorted) {
     if (term && !normalize(exercise.name).includes(term)) continue
     const key = exercise.category?.name ?? 'Other'
     if (!groups.has(key)) groups.set(key, [])

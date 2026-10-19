@@ -128,6 +128,7 @@ onMounted(async () => {
     ])
     // Deleted exercises stay in the workouts that logged them, so their history can still be filtered
     exercises.value = [...exerciseList, ...deletedList.map((e) => ({ ...e, name: `${e.name} (deleted)` }))]
+      .sort((a, b) => a.name.localeCompare(b.name))
     categories.value = categoryList
   } catch (error) {
     console.error('Failed to load filter options:', error)
