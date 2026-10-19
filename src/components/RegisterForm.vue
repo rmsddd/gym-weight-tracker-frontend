@@ -27,15 +27,15 @@ async function handleRegister() {
   fieldErrors.value = {}
 
   try {
-    await authStore.register({
+    const sentTo = await authStore.register({
       name: name.value,
       email: email.value,
       password: password.value,
       password_confirmation: passwordConfirmation.value,
     })
 
-    // The account works only after the link in the confirmation email is opened
-    router.push('/verify-email')
+    // The account is created only when the link in the confirmation email is opened
+    router.push({ name: 'verify-email', query: { sent: sentTo } })
   } catch (error) {
     const status = error.response?.status
     const errors = error.response?.data?.errors
@@ -47,6 +47,7 @@ async function handleRegister() {
       }
     } else if (status === 429)
       errorMessage.value = 'Too many attempts. Wait a minute and try again.'
+    else if (status === 503) errorMessage.value = error.response.data.message
     else errorMessage.value = 'Could not create the account. Check your connection and try again.'
     console.error('Registration error:', error)
   }

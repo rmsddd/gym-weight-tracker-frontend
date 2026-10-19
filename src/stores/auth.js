@@ -36,15 +36,13 @@ async function login(credentials) {
   return state.user
 }
 
+// Only emails the confirmation link: the account exists (and can log in) once it is opened
 async function register(payload) {
   await ensureCsrfCookie()
 
   const response = await api.post('/register', payload)
-  catalogStore.clear() // the exercise list is per user
-  state.user = response.data.data.user
-  state.isInitialized = true
 
-  return state.user
+  return response.data.data.email
 }
 
 async function logout() {

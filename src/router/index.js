@@ -28,7 +28,7 @@ const router = createRouter({
       component: ForgotPasswordPage,
       meta: { guestOnly: true },
     },
-    // Opened from links in emails, logged in or not: the pages handle both cases
+    // Opened from links in emails (and /verify-email right after signing up), logged in or not
     {
       path: '/reset-password',
       name: 'reset-password',
@@ -89,11 +89,6 @@ router.beforeEach(async (to) => {
 
   if (to.meta.guestOnly && isAuthenticated) {
     return { name: 'dashboard' }
-  }
-
-  // Until the email is confirmed the API refuses everything else, so only that screen is shown
-  if (!isOpen && !authStore.state.user.email_verified_at) {
-    return { name: 'verify-email' }
   }
 
   return true
