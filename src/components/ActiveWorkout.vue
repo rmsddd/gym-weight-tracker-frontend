@@ -33,6 +33,9 @@ const isItemDeleteOpen = ref(false)
 const isDeletingItem = ref(false)
 const isDeleteOpen = ref(false)
 const isDeleting = ref(false)
+const customToDelete = ref(null)
+const isCustomDeleteOpen = ref(false)
+const isDeletingCustom = ref(false)
 const newExerciseCategoryId = ref('')
 const newExerciseUnit = ref('kg')
 const setInputs = ref({})
@@ -399,6 +402,35 @@ async function createExercise() {
   }
 }
 
+// Only the exercises the user created can be deleted; the shared catalog stays as it is
+function askDeleteCustom(exercise) {
+  customToDelete.value = exercise
+  isCustomDeleteOpen.value = true
+}
+
+const customDeleteMessage = computed(
+  () =>
+    `"${customToDelete.value?.name}" will no longer be offered here, in your templates or in your records. The workouts you already logged it in keep it, sets included.`,
+)
+
+async function deleteCustomExercise() {
+  const exercise = customToDelete.value
+  isDeletingCustom.value = true
+  pickerError.value = ''
+
+  try {
+    await api.delete(`/exercises/${exercise.id}`)
+    exercises.value = exercises.value.filter((e) => e.id !== exercise.id)
+    catalogStore.removeExercise(exercise.id)
+  } catch (error) {
+    pickerError.value = 'Could not delete the exercise. Try again.'
+    console.error('Failed to delete exercise:', error)
+  } finally {
+    isDeletingCustom.value = false
+    isCustomDeleteOpen.value = false
+  }
+}
+
 async function removeExercise(workoutExercise) {
   try {
     await api.delete(`/workouts/${workoutId}/exercises/${workoutExercise.id}`)
@@ -721,9 +753,20 @@ onBeforeUnmount(() => {
                   {{ exercise.name }}
                   <span v-if="addedExerciseIds.has(exercise.id)" class="added">Added</span>
                 </span>
-                <BaseButton size="sm" :variant="addedExerciseIds.has(exercise.id) ? 'secondary' : 'primary'" @click="addExercise(exercise.id)">
-                  Add
-                </BaseButton>
+                <span class="picker-actions">
+                  <button
+                    v-if="exercise.is_custom"
+                    type="button"
+                    class="icon-btn"
+                    :aria-label="`Delete ${exercise.name}`"
+                    @click="askDeleteCustom(exercise)"
+                  >
+                    <v-icon :icon="mdiDeleteOutline" size="18" />
+                  </button>
+                  <BaseButton size="sm" :variant="addedExerciseIds.has(exercise.id) ? 'secondary' : 'primary'" @click="addExercise(exercise.id)">
+                    Add
+                  </BaseButton>
+                </span>
               </li>
             </ul>
           </details>
@@ -778,6 +821,14 @@ onBeforeUnmount(() => {
       :message="itemDeleteMessage"
       :loading="isDeletingItem"
       @confirm="confirmRemoveItem"
+    />
+
+    <ConfirmDialog
+      v-model="isCustomDeleteOpen"
+      title="Delete your exercise?"
+      :message="customDeleteMessage"
+      :loading="isDeletingCustom"
+      @confirm="deleteCustomExercise"
     />
 
     <ConfirmDialog
@@ -1187,6 +1238,17 @@ onBeforeUnmount(() => {
 .picker-name {
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+.picker-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.picker-actions .icon-btn {
+  margin: 0;
 }
 
 .added {

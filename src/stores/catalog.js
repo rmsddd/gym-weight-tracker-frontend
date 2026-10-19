@@ -37,11 +37,38 @@ async function addExercise(exercise) {
   }
 }
 
+/**
+ * The user's own exercises they deleted: gone from the picker, but still in the workouts that
+ * logged them. Not cached, since deleting one from the workout screen changes the list.
+ */
+function getDeletedExercises() {
+  return api.get('/exercises', { params: { deleted: 1 } }).then((response) => response.data.data ?? response.data)
+}
+
+/** Call after deleting one of the user's own exercises. */
+async function removeExercise(exerciseId) {
+  if (!exercisesPromise) return
+  try {
+    const list = await exercisesPromise
+    const index = list.findIndex((e) => e.id === exerciseId)
+    if (index !== -1) list.splice(index, 1)
+  } catch {
+    // the list failed to load; the next getExercises() fetches it again without the deleted one
+  }
+}
+
 function clear() {
   exercisesPromise = null
   categoriesPromise = null
 }
 
-export const catalogStore = { getExercises, getCategories, addExercise, clear }
+export const catalogStore = {
+  getExercises,
+  getDeletedExercises,
+  getCategories,
+  addExercise,
+  removeExercise,
+  clear,
+}
 
 export default catalogStore

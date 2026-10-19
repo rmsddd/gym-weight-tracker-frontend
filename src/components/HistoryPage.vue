@@ -120,11 +120,14 @@ async function loadWorkouts() {
 
 onMounted(async () => {
   try {
-    const [exerciseList, categoryList] = await Promise.all([
+    const [exerciseList, deletedList, categoryList] = await Promise.all([
       catalogStore.getExercises(),
+      // Optional: the filter still works with the current exercises if this one fails
+      catalogStore.getDeletedExercises().catch(() => []),
       catalogStore.getCategories(),
     ])
-    exercises.value = exerciseList
+    // Deleted exercises stay in the workouts that logged them, so their history can still be filtered
+    exercises.value = [...exerciseList, ...deletedList.map((e) => ({ ...e, name: `${e.name} (deleted)` }))]
     categories.value = categoryList
   } catch (error) {
     console.error('Failed to load filter options:', error)
