@@ -6,11 +6,12 @@ import { elapsedSecondsBetween, formatElapsed } from '../utils/formatElapsed'
 import authStore from '../stores/auth'
 import { mdiDeleteOutline } from '@mdi/js'
 import AmbientBackground from './ui/AmbientBackground.vue'
-import AppMenu from './ui/AppMenu.vue'
 import Avatar from './ui/Avatar.vue'
 import ConfirmDialog from './ui/ConfirmDialog.vue'
 import BaseButton from './ui/BaseButton.vue'
+import MonthCalendar from './ui/MonthCalendar.vue'
 import SkeletonList from './ui/SkeletonList.vue'
+import TemplateShelf from './ui/TemplateShelf.vue'
 
 const RECENT_LIMIT = 5
 
@@ -72,7 +73,6 @@ const averageDuration = computed(() => {
 // The most recent day at the gym, the workout in progress included
 const lastWorkout = computed(() => sortedWorkouts.value[0] ?? null)
 
-
 function isRunning(workout) {
   return workout.started_at != null && workout.finished_at == null
 }
@@ -117,97 +117,136 @@ async function confirmDelete() {
           <Avatar :code="authStore.state.user?.avatar" :size="44" />
           <h1 class="greeting">Hi, {{ firstName }}</h1>
         </RouterLink>
-
-        <div class="header-actions">
-          <BaseButton class="add-workout-button" @click="router.push('/workouts/new')">
-            + New workout
-          </BaseButton>
-
-          <AppMenu />
-        </div>
       </header>
 
-      <section v-if="runningWorkouts.length > 0" class="continue-section" aria-label="Workout in progress">
-        <RouterLink
-          v-for="workout in runningWorkouts"
-          :key="workout.id"
-          :to="`/workouts/${workout.id}`"
-          class="continue-card pressable"
-        >
-          <span class="continue-info">
-            <span class="continue-label">In progress</span>
-            <span class="continue-name">{{ workout.name || 'Workout' }}</span>
-          </span>
-          <span class="continue-time">{{ runningTime(workout) }}</span>
-          <span class="continue-cta">Continue</span>
-        </RouterLink>
-      </section>
+      <!-- Phone: one column, Train then Progress. PC: the month on the left, the rest on the right;
+           workouts start from the rail there, so the Train zone is phone only. -->
+      <div class="dashboard-grid">
+        <MonthCalendar class="pc-only" :workouts="pastWorkouts" />
 
-      <section class="stats-row">
-        <v-card class="stat-card" color="surface">
-          <p class="stat-label">Workouts (30 days)</p>
-          <p class="stat-value">{{ last30DaysWorkouts.length }}</p>
-        </v-card>
+        <div>
+          <h2 class="zone-title phone-only">Train</h2>
 
-        <v-card class="stat-card" color="surface">
-          <p class="stat-label">Last workout</p>
-          <p class="stat-value">{{ lastWorkout ? formatDate(lastWorkout.date) : '—' }}</p>
-        </v-card>
+          <section
+            v-if="runningWorkouts.length > 0"
+            class="continue-section"
+            aria-label="Workout in progress"
+          >
+            <RouterLink
+              v-for="workout in runningWorkouts"
+              :key="workout.id"
+              :to="`/workouts/${workout.id}`"
+              class="continue-card pressable"
+            >
+              <span class="continue-info">
+                <span class="continue-label">In progress</span>
+                <span class="continue-name">{{ workout.name || 'Workout' }}</span>
+              </span>
+              <span class="continue-time">{{ runningTime(workout) }}</span>
+              <span class="continue-cta">Continue</span>
+            </RouterLink>
+          </section>
 
-        <v-card class="stat-card" color="surface">
-          <p class="stat-label">Average duration</p>
-          <p class="stat-value accent">
-            <template v-if="averageDuration != null">{{ averageDuration }}<span class="stat-unit">min</span></template>
-            <template v-else>—</template>
-          </p>
-        </v-card>
-      </section>
+          <!-- Hidden while a workout runs, so a stray tap cannot start a second one -->
+          <TemplateShelf
+            v-if="!isLoading && runningWorkouts.length === 0"
+            class="train-shelf phone-only"
+          />
 
-      <section class="recent-section">
-        <h2 class="section-title">Recent workouts</h2>
+          <h2 class="zone-title phone-only">Progress</h2>
 
-        <SkeletonList v-if="isLoading" :rows="3" />
-        <div v-else-if="sortedWorkouts.length === 0" class="empty-state">
-          <Avatar :code="authStore.state.user?.avatar" :size="64" />
-          <div class="empty-copy">
-            <p class="empty-title">No workouts yet</p>
-            <p class="empty-text">Start one and log your sets as you go. Your history and records build from there.</p>
-            <BaseButton @click="router.push('/workouts/new')">Start your first workout</BaseButton>
-          </div>
-        </div>
-        <p v-else-if="recentWorkouts.length === 0" class="quiet">Past workouts show up here once you stop one.</p>
+          <section class="stats-row">
+            <v-card class="stat-card" color="surface">
+              <p class="stat-label">Workouts (30 days)</p>
+              <p class="stat-value">{{ last30DaysWorkouts.length }}</p>
+            </v-card>
 
-        <template v-else>
-          <ul class="workout-list">
-            <li v-for="workout in recentWorkouts" :key="workout.id" class="workout-row pressable">
-              <!-- The link stretches over the whole row; the delete button sits above it -->
-              <RouterLink :to="`/workouts/${workout.id}`" class="row-link">
-                <span class="workout-name">{{ workout.name || 'Workout' }}</span>
-                <span class="workout-meta">
-                  {{ formatDate(workout.date) }}
-                  <template v-if="workout.duration_minutes != null"> · {{ workout.duration_minutes }} min</template>
-                </span>
-              </RouterLink>
+            <v-card class="stat-card" color="surface">
+              <p class="stat-label">Last workout</p>
+              <p class="stat-value">{{ lastWorkout ? formatDate(lastWorkout.date) : '—' }}</p>
+            </v-card>
 
-              <div class="row-actions">
-                <v-btn
-                  :icon="mdiDeleteOutline"
-                  variant="text"
-                  size="small"
-                  color="secondary"
-                  :aria-label="`Delete ${workout.name || 'workout'}`"
-                  @click="askDelete(workout)"
-                />
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" class="chevron" aria-hidden="true">
-                  <path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
+            <v-card class="stat-card" color="surface">
+              <p class="stat-label">Average duration</p>
+              <p class="stat-value accent">
+                <template v-if="averageDuration != null"
+                  >{{ averageDuration }}<span class="stat-unit">min</span></template
+                >
+                <template v-else>—</template>
+              </p>
+            </v-card>
+          </section>
+
+          <section class="recent-section">
+            <h2 class="section-title">Recent workouts</h2>
+
+            <SkeletonList v-if="isLoading" :rows="3" />
+            <div v-else-if="sortedWorkouts.length === 0" class="empty-state">
+              <Avatar :code="authStore.state.user?.avatar" :size="64" />
+              <div class="empty-copy">
+                <p class="empty-title">No workouts yet</p>
+                <p class="empty-text">
+                  Start one and log your sets as you go. Your history and records build from there.
+                </p>
+                <BaseButton @click="router.push('/workouts/new')"
+                  >Start your first workout</BaseButton
+                >
               </div>
-            </li>
-          </ul>
+            </div>
+            <p v-else-if="recentWorkouts.length === 0" class="quiet">
+              Past workouts show up here once you stop one.
+            </p>
 
-          <RouterLink v-if="hasMore" to="/history" class="see-all">See all workouts in History →</RouterLink>
-        </template>
-      </section>
+            <template v-else>
+              <ul class="workout-list">
+                <li
+                  v-for="workout in recentWorkouts"
+                  :key="workout.id"
+                  class="workout-row pressable"
+                >
+                  <!-- The link stretches over the whole row; the delete button sits above it -->
+                  <RouterLink :to="`/workouts/${workout.id}`" class="row-link">
+                    <span class="workout-name">{{ workout.name || 'Workout' }}</span>
+                    <span class="workout-meta">
+                      {{ formatDate(workout.date) }}
+                      <template v-if="workout.duration_minutes != null">
+                        · {{ workout.duration_minutes }} min</template
+                      >
+                    </span>
+                  </RouterLink>
+
+                  <div class="row-actions">
+                    <v-btn
+                      :icon="mdiDeleteOutline"
+                      variant="text"
+                      size="small"
+                      color="secondary"
+                      :aria-label="`Delete ${workout.name || 'workout'}`"
+                      @click="askDelete(workout)"
+                    />
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="18"
+                      height="18"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      class="chevron"
+                      aria-hidden="true"
+                    >
+                      <path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </div>
+                </li>
+              </ul>
+
+              <RouterLink v-if="hasMore" to="/history" class="see-all"
+                >See all workouts in History →</RouterLink
+              >
+            </template>
+          </section>
+        </div>
+      </div>
     </main>
 
     <ConfirmDialog
@@ -281,10 +320,49 @@ async function confirmDelete() {
   margin: 0;
 }
 
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.pc-only {
+  display: none;
+}
+
+.zone-title {
+  margin: 0 0 12px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.train-shelf {
+  margin-bottom: 28px;
+}
+
+@media (min-width: 900px) {
+  .dashboard-content {
+    max-width: 1100px;
+  }
+
+  /* The right column starts level with the calendar's grid, below its month heading */
+  .dashboard-grid {
+    grid-template-columns: 420px minmax(0, 1fr);
+    gap: 32px;
+    align-items: start;
+  }
+
+  .dashboard-grid > :last-child {
+    padding-top: 50px;
+  }
+
+  .pc-only {
+    display: block;
+  }
+
+  .phone-only {
+    display: none;
+  }
 }
 
 .continue-section {
@@ -545,15 +623,6 @@ async function confirmDelete() {
 @media (max-width: 420px) {
   .greeting {
     font-size: 24px;
-  }
-
-  .header-actions {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .add-workout-button {
-    flex: 1;
   }
 
   .continue-card {
