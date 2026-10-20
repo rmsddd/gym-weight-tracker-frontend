@@ -1,6 +1,5 @@
 <script setup>
 import AmbientBackground from './AmbientBackground.vue'
-import AppMenu from './AppMenu.vue'
 
 defineProps({
   title: { type: String, required: true },
@@ -13,7 +12,6 @@ defineProps({
     <main class="container">
       <header class="page-header">
         <h1 class="page-title">{{ title }}</h1>
-        <AppMenu />
       </header>
       <slot />
     </main>
