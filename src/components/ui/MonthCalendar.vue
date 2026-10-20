@@ -64,15 +64,23 @@ function moveMonth(step) {
   shown.value = new Date(shown.value.getFullYear(), shown.value.getMonth() + step, 1)
 }
 
+const nameOf = (workout) => workout.name || 'Workout'
+
 function label(cell) {
-  return cell.workouts.length === 1
-    ? cell.workouts[0].name || 'Workout'
-    : `${cell.workouts.length} workouts`
+  return cell.workouts.length === 1 ? nameOf(cell.workouts[0]) : `${cell.workouts.length} workouts`
+}
+
+// A day with several workouts shows one name per line: the first two, or the first and "+N more"
+function lines(cell) {
+  const [first, second] = cell.workouts
+  const rest = cell.workouts.length - 1
+  return [nameOf(first), rest === 1 ? nameOf(second) : `+${rest} more`]
 }
 
 function ariaLabel(cell) {
   const date = new Date(shown.value.getFullYear(), shown.value.getMonth(), cell.day)
-  return `${date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}, ${label(cell)}`
+  const names = cell.workouts.map(nameOf).join(', ')
+  return `${date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}, ${names}`
 }
 </script>
 
@@ -131,7 +139,9 @@ function ariaLabel(cell) {
                 :class="{ today: cell.isToday }"
                 :aria-label="ariaLabel(cell)"
               >
-                <em class="day-label" aria-hidden="true">{{ label(cell) }}</em>
+                <span class="day-label day-lines" aria-hidden="true">
+                  <em v-for="(line, index) in lines(cell)" :key="index">{{ line }}</em>
+                </span>
                 <span aria-hidden="true">{{ cell.day }}</span>
               </button>
             </template>
@@ -270,6 +280,19 @@ function ariaLabel(cell) {
   text-align: left;
   color: rgba(255, 255, 255, 0.72);
   overflow-wrap: anywhere;
+}
+
+/* One line per workout, each cut short rather than wrapped */
+.day-lines {
+  display: flex;
+  flex-direction: column;
+}
+
+.day-lines em {
+  font-style: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .day-menu {

@@ -115,8 +115,8 @@ No Train zone on PC (workouts start from the rail button). Two columns:
   bottom-right corner. The calendar shows no totals of its own.
   - A day with one finished workout is magenta and shows the workout's name, small, top-left,
     slightly faded, cut to two lines.
-  - A day with two or more shows **"2 workouts"** (or 3, …) in the same style instead of a name.
-    If that does not fit, use **"×2"**.
+  - A day with two shows both names, one per line, each cut with an ellipsis when long. With
+    three or more, the second line reads "+N more" (changed 2026-10-20 from "2 workouts").
   - Today is outlined in blush. Today with a workout is magenta and keeps the outline
     **(Claude's call)**.
   - Days outside the month are blank.
