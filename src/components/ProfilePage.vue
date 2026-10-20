@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { mdiChevronRight, mdiTrophyOutline } from '@mdi/js'
 import api from '../services/api'
 import authStore from '../stores/auth'
 import AvatarPicker from './ui/AvatarPicker.vue'
@@ -103,6 +104,13 @@ async function handleLogout() {
         <p class="stat-value">{{ stat.value }}</p>
       </v-card>
     </section>
+
+    <!-- The phone's tab bar has no Records tab, so this is its way in -->
+    <RouterLink to="/records" class="records-link pressable">
+      <v-icon :icon="mdiTrophyOutline" size="22" class="records-icon" />
+      <span class="records-text">Personal records</span>
+      <v-icon :icon="mdiChevronRight" size="20" class="records-chevron" />
+    </RouterLink>
 
     <BaseButton variant="secondary" size="lg" block @click="handleLogout">Log out</BaseButton>
 
@@ -246,5 +254,34 @@ async function handleLogout() {
   font-size: 24px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
+}
+
+.records-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  background: var(--color-surface-low);
+  border-radius: var(--radius-card);
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+
+.records-link:hover {
+  background: var(--color-surface-hover);
+}
+
+.records-icon {
+  color: var(--color-accent-blush);
+}
+
+.records-text {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.records-chevron {
+  color: var(--color-text-faint);
 }
 </style>
