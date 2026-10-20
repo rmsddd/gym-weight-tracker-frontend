@@ -40,6 +40,18 @@ const firstName = computed(() => authStore.state.user?.name?.split(' ')[0] ?? ''
 <template>
   <!-- Phone: tab bar along the bottom edge -->
   <nav class="tab-bar" aria-label="Main">
+    <!-- The bar's top edge rises around the ＋ button along a circle concentric with it, so the
+         button sits inside the bar instead of floating over it -->
+    <svg class="hump" viewBox="0 0 100 26" width="100" height="26" aria-hidden="true">
+      <path
+        class="hump-fill"
+        d="M0 22.5 H7 Q17 22.5 21.2 18 A34 34 0 0 1 78.8 18 Q83 22.5 93 22.5 H100 V26 H0 Z"
+      />
+      <path
+        class="hump-edge"
+        d="M0 22.5 H7 Q17 22.5 21.2 18 A34 34 0 0 1 78.8 18 Q83 22.5 93 22.5 H100"
+      />
+    </svg>
     <template v-for="tab in tabs" :key="tab?.to ?? 'start'">
       <button
         v-if="tab === null"
@@ -135,26 +147,54 @@ const firstName = computed(() => authStore.state.user?.name?.split(' ')[0] ?? ''
   color: var(--color-accent-blush);
 }
 
+/* Centred over the middle slot, its bottom overlapping the bar's top border to hide it there */
+.hump {
+  position: absolute;
+  left: 50%;
+  top: -23px;
+  margin-left: -50px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.hump-fill {
+  fill: var(--color-surface-low);
+}
+
+.hump-edge {
+  fill: none;
+  stroke: var(--color-divider);
+  stroke-width: 1;
+}
+
 .start-tab {
+  position: relative;
+  justify-content: flex-start;
   border: 0;
   background: none;
   padding: 0;
   cursor: pointer;
 }
 
-/* Raised half out of the bar: the one thing a thumb should find without looking */
+/* Rises above the bar, centred on the hump's arc with a 6px gap all round: the one thing a
+   thumb should find without looking */
 .start-circle {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 56px;
   height: 56px;
-  margin-top: -28px;
+  margin-top: -15px;
   border-radius: 50%;
   background: var(--color-accent);
   color: #fff;
-  box-shadow: 0 8px 20px rgba(232, 21, 138, 0.35);
-  transition: transform 0.15s var(--ease-out);
+  transition:
+    transform 0.15s var(--ease-out),
+    background 0.2s var(--ease-out);
+}
+
+.start-tab:hover .start-circle {
+  background: var(--color-accent-deep);
 }
 
 .start-tab:active .start-circle {
