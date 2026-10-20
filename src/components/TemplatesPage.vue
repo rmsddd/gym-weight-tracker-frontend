@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { mdiDeleteOutline } from '@mdi/js'
 import api from '../services/api'
+import { useStartWorkout } from '../composables/useStartWorkout'
 import catalogStore from '../stores/catalog'
 import BaseButton from './ui/BaseButton.vue'
 import PageLayout from './ui/PageLayout.vue'
@@ -10,6 +11,7 @@ import SkeletonList from './ui/SkeletonList.vue'
 import ConfirmDialog from './ui/ConfirmDialog.vue'
 
 const router = useRouter()
+const { startingTemplateId, startFromTemplate } = useStartWorkout()
 
 const templates = ref([])
 const isLoading = ref(true)
@@ -17,7 +19,6 @@ const errorMessage = ref('')
 const templateToDelete = ref(null)
 const isDeleteOpen = ref(false)
 const isDeleting = ref(false)
-const startingId = ref(null)
 const isCreateOpen = ref(false)
 const isCreating = ref(false)
 const createError = ref('')
@@ -116,19 +117,13 @@ async function createTemplate() {
 
 // Starts today's workout with the template's exercises already in it, and opens it
 async function startFrom(template) {
-  if (startingId.value !== null) return
   errorMessage.value = ''
-  startingId.value = template.id
 
   try {
-    const today = new Date()
-    const date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-    const response = await api.post('/workouts', { name: template.name, date, template_id: template.id })
-    router.push(`/workouts/${response.data.data.id}`)
+    await startFromTemplate(template)
   } catch (error) {
     errorMessage.value = 'Could not start the workout. Try again.'
     console.error('Failed to start workout from template:', error)
-    startingId.value = null
   }
 }
 
@@ -172,8 +167,8 @@ async function confirmDelete() {
             <p class="template-meta">{{ template.exercises.map((e) => e.name).join(' · ') }}</p>
           </div>
           <div class="template-actions">
-            <BaseButton size="sm" :disabled="startingId !== null" @click="startFrom(template)">
-              {{ startingId === template.id ? 'Starting…' : 'Start' }}
+            <BaseButton size="sm" :disabled="startingTemplateId !== null" @click="startFrom(template)">
+              {{ startingTemplateId === template.id ? 'Starting…' : 'Start' }}
             </BaseButton>
             <v-btn
               :icon="mdiDeleteOutline"
