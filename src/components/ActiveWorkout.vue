@@ -11,6 +11,7 @@ import AmbientBackground from './ui/AmbientBackground.vue'
 import Avatar from './ui/Avatar.vue'
 import authStore from '../stores/auth'
 import catalogStore from '../stores/catalog'
+import workoutFocus from '../stores/workoutFocus'
 import BaseButton from './ui/BaseButton.vue'
 import ConfirmDialog from './ui/ConfirmDialog.vue'
 
@@ -64,6 +65,10 @@ const hasKeyboard = window.matchMedia('(pointer: fine)').matches
 const isFinished = computed(() => workout.value?.finished_at != null)
 // Finished for good: it can no longer be started again
 const isCompleted = computed(() => workout.value?.completed_at != null)
+
+// No app navigation while the workout runs. Hidden while loading too, so it does not flash in
+// over a running workout; a stopped one shows it once loaded.
+watch(() => workout.value == null || !isFinished.value, workoutFocus.setFocused, { immediate: true })
 
 const statusLabel = computed(() => {
   if (isCompleted.value) return 'Finished'
@@ -549,6 +554,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   clearInterval(timerId)
   clearTimeout(recordTimerId)
+  workoutFocus.setFocused(false)
 })
 </script>
 
