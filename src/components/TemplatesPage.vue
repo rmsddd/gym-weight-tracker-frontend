@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { mdiDeleteOutline } from '@mdi/js'
 import api from '../services/api'
 import { useStartWorkout } from '../composables/useStartWorkout'
@@ -10,6 +10,7 @@ import PageLayout from './ui/PageLayout.vue'
 import SkeletonList from './ui/SkeletonList.vue'
 import ConfirmDialog from './ui/ConfirmDialog.vue'
 
+const route = useRoute()
 const router = useRouter()
 const { startingTemplateId, startFromTemplate } = useStartWorkout()
 
@@ -32,6 +33,13 @@ const selectedIds = ref([])
 const hasKeyboard = window.matchMedia('(pointer: fine)').matches
 
 onMounted(async () => {
+  // The dashboard's "+ New" card lands here with ?new=1. Dropped right away, so a refresh or
+  // Back does not open the dialog again.
+  if (route.query.new) {
+    router.replace({ query: {} })
+    openCreate()
+  }
+
   try {
     const response = await api.get('/workout-templates')
     templates.value = response.data.data ?? response.data
