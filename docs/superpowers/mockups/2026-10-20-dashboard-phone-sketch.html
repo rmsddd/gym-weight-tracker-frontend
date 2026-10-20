@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=390">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:390px;height:844px;overflow:hidden;background:#08060a;color:#f5f0f4;font:500 15px/1.4 Nunito,sans-serif;position:relative}
+.wrap{padding:56px 20px 0}
+.top{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.av{width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffb3de,#e8158a 70%)}
+h1{font-weight:800;font-size:28px;letter-spacing:-.01em}
+h2{font-size:20px;font-weight:800;margin-bottom:12px;display:flex;justify-content:space-between;align-items:baseline}
+h2 a{font-size:14px;font-weight:700;color:#9a93a0}
+.live{background:#2a2531;border:1px solid #423b49;border-radius:18px;padding:16px 18px;display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.live div{flex:1}.live small{color:#9a93a0;font-size:13px;display:block}.live b{font-size:17px}
+.live .t{font-size:26px;font-weight:800;color:#e8158a;font-variant-numeric:tabular-nums}
+.shelf{display:flex;gap:10px;margin-bottom:34px;overflow:hidden}
+.card{flex:0 0 136px;background:#1b1720;border-radius:16px;padding:14px}
+.card b{display:block;font-size:16px;margin-bottom:2px}.card small{color:#9a93a0;font-size:13px}
+.card.new{background:transparent;border:1.5px dashed #423b49;color:#9a93a0;display:flex;align-items:center;justify-content:center;font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat{background:#1b1720;border-radius:16px;padding:14px}
+.stat small{color:#9a93a0;font-size:13px;display:block;margin-bottom:8px}
+.stat b{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+.stat b.acc{color:#e8158a}.stat b span{font-size:13px;margin-left:3px}
+.row{background:#1b1720;border-radius:16px;padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.row b{font-weight:700}.row small{color:#9a93a0;font-size:13px}
+.bar{position:absolute;left:0;right:0;bottom:0;height:84px;background:#1b1720;border-top:1px solid #38333c;display:grid;grid-template-columns:repeat(5,1fr);padding:10px 6px 24px}
+.tab{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:700;color:#9a93a0}
+.tab svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab.on{color:#ffb3de}
+.start{width:56px;height:56px;border-radius:50%;background:#e8158a;display:flex;align-items:center;justify-content:center;margin-top:-28px;box-shadow:0 8px 20px rgba(232,21,138,.35)}
+.start svg{stroke:#fff;stroke-width:2.6}
+</style></head><body>
+<div class="wrap">
+  <div class="top"><div class="av"></div><h1>Hi, Remus</h1></div>
+
+  <h2>Train</h2>
+  <div class="live"><div><small>In progress</small><b>Push day</b></div><span class="t">24:13</span></div>
+  <div class="shelf">
+    <div class="card"><b>Pull day</b><small>6 exercises</small></div>
+    <div class="card"><b>Legs</b><small>5 exercises</small></div>
+    <div class="card new">+ Empty</div>
+  </div>
+
+  <h2>Progress <a>History ›</a></h2>
+  <div class="stats">
+    <div class="stat"><small>30 days</small><b>12</b></div>
+    <div class="stat"><small>Last</small><b>18 Oct</b></div>
+    <div class="stat"><small>Average</small><b class="acc">54<span>min</span></b></div>
+  </div>
+  <div class="row"><div><b>Legs</b><br><small>Wed 16 Oct · 61 min</small></div><small>›</small></div>
+  <div class="row"><div><b>Pull day</b><br><small>Mon 14 Oct · 49 min</small></div><small>›</small></div>
+</div>
+
+<nav class="bar">
+  <div class="tab on"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</div>
+  <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>History</div>
+  <div class="tab"><div class="start"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></div></div>
+  <div class="tab"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/></svg>Templates</div>
+  <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Profile</div>
+</nav>
+</body></html>

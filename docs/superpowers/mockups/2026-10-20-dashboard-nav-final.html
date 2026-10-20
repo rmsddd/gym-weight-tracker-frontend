@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ro"><head><meta charset="utf-8"><title>Varianta finală</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#141018;color:#f5f0f4;font:500 15px/1.4 Nunito,system-ui,sans-serif;padding:28px 24px 60px}
+.intro{max-width:1200px;margin:0 auto 22px}
+.intro h1{font-size:24px;font-weight:800;margin-bottom:6px}
+.intro p{color:#9a93a0;max-width:85ch}
+.label{max-width:1200px;margin:0 auto 10px;display:flex;gap:12px;align-items:baseline}
+.label b{font-size:18px;font-weight:800}.label span{color:#9a93a0}
+svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.av{width:40px;height:40px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffb3de,#e8158a 70%);flex-shrink:0}
+small,.m{color:#9a93a0;font-size:13px}
+.calhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+.calhead h2{font-size:20px;font-weight:800}
+.calhead a,.zt a{font-size:14px;font-weight:700;color:#9a93a0}
+.panel{background:#1b1720;border-radius:18px;padding:18px}
+.dow,.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.dow{font-size:12px;color:#9a93a0;font-weight:700;text-align:center;margin-bottom:10px}
+.cal span{aspect-ratio:1;position:relative;border-radius:9px;background:#241f2a;display:flex;align-items:flex-end;justify-content:flex-end;padding:4px 7px;font-size:12px;color:#6f6875;font-variant-numeric:tabular-nums}
+.cal span.on{background:#e8158a;color:#fff}
+.cal span.today{background:transparent;outline:1.5px solid #ffb3de;outline-offset:-1.5px;color:#ffb3de}
+.cal span.out{background:transparent}
+.cal span em{position:absolute;left:6px;right:5px;top:5px;font-style:normal;font-size:10.5px;line-height:1.15;font-weight:600;color:rgba(255,255,255,.72);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;text-align:left}
+.screen .cols{grid-template-columns:480px 1fr}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+.stat{background:#1b1720;border-radius:14px;padding:14px;display:flex;flex-direction:column;justify-content:space-between;gap:10px}
+.stat b{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+.stat b.acc{color:#e8158a}.stat b span{font-size:13px;font-weight:600;margin-left:4px}
+.sec{margin:0 0 14px;font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#9a93a0}
+.row{background:#1b1720;border-radius:14px;padding:16px 18px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.row b{display:block;font-size:16px;font-weight:700;margin-bottom:4px}
+.acts{display:flex;gap:14px;color:#9a93a0;align-items:center}
+.acts svg{width:18px;height:18px}
+.screen{width:1200px;height:760px;margin:0 auto 44px;background:#08060a;border:1px solid #423b49;border-radius:14px;overflow:hidden;display:flex}
+.rail{width:232px;background:#1b1720;border-right:1px solid #38333c;padding:22px 14px;display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+.brand{font-weight:800;font-size:16px;padding:0 10px 18px}
+.startbtn{display:flex;align-items:center;gap:10px;background:#e8158a;border-radius:14px;padding:12px 14px;font-weight:800;margin-bottom:14px;box-shadow:0 6px 18px rgba(232,21,138,.3)}
+.nav{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;color:#9a93a0;font-weight:700}
+.nav.on{background:#2a2531;color:#ffb3de}
+.me{margin-top:auto;display:flex;align-items:center;gap:10px;padding:10px;border-top:1px solid #38333c}
+.me small{display:block;font-size:12px}
+main{flex:1;padding:30px 40px;overflow:hidden}
+main h1{font-size:28px;font-weight:800;margin-bottom:22px}
+.cols{display:grid;grid-template-columns:420px 1fr;gap:32px;align-items:start}
+.phone{width:390px;height:844px;margin:0 auto;background:#08060a;border:1px solid #423b49;border-radius:36px;overflow:hidden;position:relative}
+.phone .inner{padding:50px 18px 0}
+.phone h1{font-size:26px;font-weight:800;display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.zt{font-size:20px;font-weight:800;margin-bottom:12px;display:flex;justify-content:space-between;align-items:baseline}
+.live{background:#2a2531;border:1px solid #423b49;border-radius:18px;padding:14px 16px;display:flex;align-items:center;gap:14px;margin-bottom:10px}
+.live div{flex:1}.live small{display:block}.live b{font-size:16px}
+.live .t{font-size:24px;font-weight:800;color:#e8158a;font-variant-numeric:tabular-nums}
+.shelf{display:flex;gap:8px;margin-bottom:28px}
+.tcard{flex:0 0 112px;background:#1b1720;border-radius:14px;padding:12px}
+.tcard b{display:block;font-size:15px}
+.tcard.new{background:transparent;border:1.5px dashed #423b49;color:#9a93a0;display:flex;align-items:center;justify-content:center;font-weight:700}
+.phone .stats{gap:8px;margin-bottom:14px}
+.phone .stat{padding:12px}
+.phone .stat b{font-size:20px}
+.phone .row{padding:14px 16px;margin-bottom:10px}
+.bar{position:absolute;left:0;right:0;bottom:0;height:84px;background:#1b1720;border-top:1px solid #38333c;display:grid;grid-template-columns:repeat(5,1fr);padding:10px 6px 24px}
+.tab{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:700;color:#9a93a0}
+.tab.on{color:#ffb3de}
+.fab{width:56px;height:56px;border-radius:50%;background:#e8158a;display:flex;align-items:center;justify-content:center;margin-top:-28px;box-shadow:0 8px 20px rgba(232,21,138,.35);color:#fff}
+</style></head><body>
+
+<div class="intro">
+  <h1>Varianta finală: PC și telefon</h1>
+  <p>Pe PC: bara laterală, calendarul lunii (cu numele antrenamentelor) în stânga, statisticile și ultimele antrenamente în dreapta. Pe telefon: varianta aleasă, cu zonele Train și Progress și bara de tab-uri jos. Cardul „In progress” apare doar când ai un antrenament pornit; pe telefon l-am pus ca să vezi cum arată.</p>
+</div>
+
+<div class="label"><b>Pe PC</b><span>bară laterală + calendar + statistici și recente</span></div>
+<div class="screen">
+  <aside class="rail"><div class="brand">Gym Weight Tracker</div><div class="startbtn"><svg class="i" viewBox="0 0 24 24" style="stroke-width:2.6"><path d="M12 5v14M5 12h14"/></svg>Start workout</div><div class="nav on"><svg class="i" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</div><div class="nav"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/></svg>Templates</div><div class="nav"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>History</div><div class="nav"><svg class="i" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0zM12 13v4M8 21h8"/></svg>Records</div><div class="me"><div class="av"></div><div><b>Remus</b><small>Profile</small></div></div></aside>
+  <main>
+    <h1>Hi, Remus</h1>
+    <div class="cols">
+      <section>
+        <div class="calhead"><h2>October</h2><a>History ›</a></div>
+        <div class="panel">
+          <div class="dow"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+          <div class="cal">
+            <span class="out"></span><span class="on"><em>Push day</em>1</span><span>2</span><span class="on"><em>Pull day</em>3</span><span>4</span><span class="on"><em>Legs</em>5</span><span>6</span>
+            <span>7</span><span class="on"><em>Push day</em>8</span><span>9</span><span class="on"><em>Upper body</em>10</span><span class="on"><em>Legs</em>11</span><span>12</span><span>13</span>
+            <span class="on"><em>Pull day</em>14</span><span>15</span><span class="on"><em>Legs</em>16</span><span>17</span><span class="on"><em>Push day</em>18</span><span>19</span><span class="today">20</span>
+            <span>21</span><span>22</span><span>23</span><span>24</span><span>25</span><span>26</span><span>27</span>
+            <span>28</span><span>29</span><span>30</span><span>31</span><span class="out"></span><span class="out"></span><span class="out"></span>
+          </div>
+        </div>
+      </section>
+      <section style="padding-top:38px">
+        <div class="stats">
+          <div class="stat"><small>Workouts (30 days)</small><b>12</b></div>
+          <div class="stat"><small>Last workout</small><b>Oct 18</b></div>
+          <div class="stat"><small>Average duration</small><b class="acc">54<span>min</span></b></div>
+        </div>
+        <p class="sec">Recent workouts</p>
+        <div class="row"><div><b>Push day</b><small>Oct 18 · 58 min</small></div><div class="acts"><svg class="i" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/></svg><svg class="i" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div></div>
+        <div class="row"><div><b>Legs</b><small>Oct 16 · 61 min</small></div><div class="acts"><svg class="i" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/></svg><svg class="i" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div></div>
+        <div class="row"><div><b>Pull day</b><small>Oct 14 · 49 min</small></div><div class="acts"><svg class="i" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/></svg><svg class="i" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div></div>
+        <div class="row"><div><b>Push day</b><small>Oct 11 · 55 min</small></div><div class="acts"><svg class="i" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/></svg><svg class="i" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div class="label"><b>Pe telefon</b><span>varianta aleasă: Train sus, Progress jos, bara de tab-uri</span></div>
+<div class="phone">
+  <div class="inner">
+    <h1><span class="av" style="width:36px;height:36px"></span>Hi, Remus</h1>
+    <h2 class="zt">Train</h2>
+    <div class="live"><div><small>In progress</small><b>Push day</b></div><span class="t">24:13</span></div>
+    <div class="shelf">
+      <div class="tcard"><b>Pull day</b><small>6 exercises</small></div>
+      <div class="tcard"><b>Legs</b><small>5 exercises</small></div>
+      <div class="tcard new">+ Empty</div>
+    </div>
+    <h2 class="zt">Progress</h2>
+    <div class="stats">
+      <div class="stat"><small>Workouts (30 days)</small><b>12</b></div>
+      <div class="stat"><small>Last workout</small><b>Oct 18</b></div>
+      <div class="stat"><small>Average duration</small><b class="acc">54<span>min</span></b></div>
+    </div>
+    <div class="row"><div><b>Legs</b><small>Oct 16 · 61 min</small></div><div class="acts"><svg class="i" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/></svg><svg class="i" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div></div>
+    <div class="row"><div><b>Pull day</b><small>Oct 14 · 49 min</small></div><div class="acts"><svg class="i" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/></svg><svg class="i" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div></div>
+  </div>
+  <nav class="bar">
+    <div class="tab on"><svg class="i" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</div>
+    <div class="tab"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/></svg>Templates</div>
+    <div class="tab"><div class="fab"><svg class="i" viewBox="0 0 24 24" style="stroke-width:2.6"><path d="M12 5v14M5 12h14"/></svg></div></div>
+    <div class="tab"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>History</div>
+    <div class="tab"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Profile</div>
+  </nav>
+</div>
+
+<p class="intro m" style="margin-top:20px">Date de exemplu, nu din contul tău.</p>
+</body></html>

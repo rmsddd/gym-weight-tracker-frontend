@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ro"><head><meta charset="utf-8"><title>Rail: Train și Progress</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#141018;color:#f5f0f4;font:500 15px/1.4 Nunito,system-ui,sans-serif;padding:28px 24px 60px}
+.intro{max-width:1200px;margin:0 auto 22px}
+.intro h1{font-size:24px;font-weight:800;margin-bottom:6px}
+.intro p{color:#9a93a0;max-width:85ch}
+.variant{max-width:1200px;margin:0 auto 44px;cursor:pointer;border-radius:16px;outline:2px solid transparent;outline-offset:6px;transition:outline-color .2s}
+.variant.selected{outline-color:#e8158a}
+.vhead{display:flex;align-items:baseline;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+.vhead b{font-size:18px;font-weight:800}.vhead span{color:#9a93a0}
+.letter{display:inline-flex;width:30px;height:26px;border-radius:8px;background:#2a2531;align-items:center;justify-content:center;font-weight:800;color:#ffb3de}
+.screen{width:1200px;height:720px;background:#08060a;border:1px solid #423b49;border-radius:14px;overflow:hidden;display:flex}
+svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.rail{width:232px;background:#1b1720;border-right:1px solid #38333c;padding:22px 14px;display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+.brand{font-weight:800;font-size:16px;padding:0 10px 18px}
+.startbtn{display:flex;align-items:center;gap:10px;background:#e8158a;border-radius:14px;padding:12px 14px;font-weight:800;margin-bottom:14px;box-shadow:0 6px 18px rgba(232,21,138,.3)}
+.nav{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;color:#9a93a0;font-weight:700}
+.nav.on{background:#2a2531;color:#ffb3de}
+.me{margin-top:auto;display:flex;align-items:center;gap:10px;padding:10px;border-top:1px solid #38333c}
+.me small{display:block;color:#9a93a0;font-size:12px}
+.av{width:40px;height:40px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffb3de,#e8158a 70%);flex-shrink:0}
+main{flex:1;padding:30px 40px;overflow:hidden}
+main>h1{font-size:28px;font-weight:800;margin-bottom:22px}
+h2{font-size:20px;font-weight:800;margin-bottom:12px;display:flex;justify-content:space-between;align-items:baseline}
+h2 a{font-size:14px;font-weight:700;color:#9a93a0}
+small,.m{color:#9a93a0;font-size:13px}
+.panel{background:#1b1720;border-radius:18px;padding:18px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:#1b1720;border-radius:16px;padding:14px}
+.stat small{display:block;margin-bottom:8px}
+.stat b{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+.acc{color:#e8158a}.stat b span{font-size:13px;margin-left:3px}
+.row{background:#1b1720;border-radius:14px;padding:12px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.row b{font-weight:700}
+.btn{background:#ce117b;border-radius:12px;padding:10px 16px;font-weight:800;font-size:14px;display:inline-block}
+.btn.ghost{background:transparent;border:1px solid #423b49;font-weight:700}
+.num{font-variant-numeric:tabular-nums}
+
+/* A1 */
+.live{display:flex;align-items:center;gap:16px;background:#2a2531;border:1px solid #423b49;border-radius:18px;padding:14px 18px;margin-bottom:12px}
+.live .t{font-size:26px;font-weight:800;color:#e8158a}
+.tpls{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px}
+.tpl{background:#1b1720;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;height:184px}
+.tpl b{font-size:17px}
+.tpl ul{list-style:none;font-size:13px;color:#9a93a0;line-height:1.55;flex:1}
+.tpl .foot{display:flex;justify-content:space-between;align-items:center}
+.tpl.new{background:transparent;border:1.5px dashed #423b49;align-items:center;justify-content:center;color:#9a93a0;font-weight:700}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+
+/* A2 */
+.grid2{display:grid;grid-template-columns:1.35fr 1fr;gap:28px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:12px 0 4px}
+.cal span{aspect-ratio:1;border-radius:8px;background:#241f2a;display:flex;align-items:flex-end;justify-content:flex-end;padding:4px 6px;font-size:11px;color:#6f6875}
+.cal span.on{background:#e8158a;color:#ffd6ec}
+.cal span.today{outline:1.5px solid #ffb3de}
+.cal span.out{background:transparent}
+.dow{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;font-size:12px;color:#9a93a0;font-weight:700;text-align:center}
+.startlist .row{margin-bottom:6px}
+.startlist .row .go{color:#ffb3de;font-weight:700;font-size:14px}
+
+/* A3 */
+.today{display:grid;grid-template-columns:1.2fr 1fr;gap:28px}
+.next{background:#2a2531;border:1px solid #423b49;border-radius:20px;padding:22px}
+.next .name{font-size:30px;font-weight:800;margin:2px 0 14px}
+.lt{display:grid;grid-template-columns:1fr auto auto;gap:8px 20px;font-size:14px;margin-bottom:18px}
+.lt .h{color:#9a93a0;font-size:12px;font-weight:700}
+.lt .v{color:#ffb3de;font-weight:700;text-align:right}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.chip{border:1px solid #423b49;border-radius:999px;padding:7px 14px;font-weight:700;font-size:14px}
+</style></head><body>
+
+<div class="intro">
+  <h1>Bara laterală (A), cu alte feluri de a face Train și Progress</h1>
+  <p>Bara din stânga rămâne la fel în toate trei. Se schimbă doar partea din dreapta. Dă click pe cea care îți place și spune-mi în terminal ce îți place sau nu.</p>
+</div>
+
+<!-- shared rail markup is repeated per screen -->
+
+<!-- A1 -->
+<div class="variant" data-choice="a1" onclick="toggleSelect(this)">
+  <div class="vhead"><span class="letter">A1</span><b>Template-urile ca un raft pe toată lățimea</b><span>Train sus, cu template-uri ca plăci care arată exercițiile; Progress dedesubt, în două coloane</span></div>
+  <div class="screen">
+    <aside class="rail"><div class="brand">Gym Weight Tracker</div><div class="startbtn"><svg class="i" viewBox="0 0 24 24" style="stroke-width:2.6"><path d="M12 5v14M5 12h14"/></svg>Start workout</div><div class="nav on"><svg class="i" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</div><div class="nav"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>History</div><div class="nav"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/></svg>Templates</div><div class="nav"><svg class="i" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0zM12 13v4M8 21h8"/></svg>Records</div><div class="me"><div class="av"></div><div><b>Remus</b><small>Profile</small></div></div></aside>
+    <main>
+      <h1>Hi, Remus</h1>
+      <h2>Train</h2>
+      <div class="live"><div style="flex:1"><small>In progress</small><br><b>Push day</b> <span class="m">· 4 of 6 exercises done</span></div><span class="t num">24:13</span><span class="btn">Continue</span></div>
+      <div class="tpls">
+        <div class="tpl"><b>Pull day</b><ul><li>Deadlift</li><li>Pull-up</li><li>Barbell row</li><li>+3 more</li></ul><div class="foot"><small>last 14 Oct</small><span class="btn">Start</span></div></div>
+        <div class="tpl"><b>Legs</b><ul><li>Squat</li><li>Romanian deadlift</li><li>Leg press</li><li>+2 more</li></ul><div class="foot"><small>last 16 Oct</small><span class="btn">Start</span></div></div>
+        <div class="tpl"><b>Upper body</b><ul><li>Bench press</li><li>Overhead press</li><li>Lat pulldown</li><li>+4 more</li></ul><div class="foot"><small>last 2 Oct</small><span class="btn">Start</span></div></div>
+        <div class="tpl new">+ Empty workout</div>
+      </div>
+      <div class="two">
+        <div><h2>Last 30 days</h2><div class="stats"><div class="stat"><small>Workouts</small><b>12</b></div><div class="stat"><small>Last</small><b>18 Oct</b></div><div class="stat"><small>Average</small><b class="acc">54<span>min</span></b></div></div></div>
+        <div><h2>Recent <a>History ›</a></h2><div class="row"><div><b>Push day</b> <small>· Fri 18 Oct · 58 min</small></div><small>›</small></div><div class="row"><div><b>Legs</b> <small>· Wed 16 Oct · 61 min</small></div><small>›</small></div></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- A2 -->
+<div class="variant" data-choice="a2" onclick="toggleSelect(this)">
+  <div class="vhead"><span class="letter">A2</span><b>Progress în față, cu calendarul lunii</b><span>stânga: luna cu zilele de antrenament aprinse și recentele; dreapta: o listă scurtă de pornire</span></div>
+  <div class="screen">
+    <aside class="rail"><div class="brand">Gym Weight Tracker</div><div class="startbtn"><svg class="i" viewBox="0 0 24 24" style="stroke-width:2.6"><path d="M12 5v14M5 12h14"/></svg>Start workout</div><div class="nav on"><svg class="i" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</div><div class="nav"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>History</div><div class="nav"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/></svg>Templates</div><div class="nav"><svg class="i" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0zM12 13v4M8 21h8"/></svg>Records</div><div class="me"><div class="av"></div><div><b>Remus</b><small>Profile</small></div></div></aside>
+    <main>
+      <h1>Hi, Remus</h1>
+      <div class="grid2">
+        <section>
+          <h2>October <a>History ›</a></h2>
+          <div class="panel">
+            <div style="display:flex;gap:28px;margin-bottom:6px"><div><b class="num" style="font-size:22px">12</b> <small>workouts</small></div><div><b class="num" style="font-size:22px">18 Oct</b> <small>last</small></div><div><b class="num acc" style="font-size:22px">54 min</b> <small>average</small></div></div>
+            <div class="dow" style="margin-top:12px"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+            <div class="cal">
+              <span class="out"></span><span class="on">1</span><span>2</span><span class="on">3</span><span>4</span><span class="on">5</span><span>6</span>
+              <span>7</span><span class="on">8</span><span>9</span><span class="on">10</span><span class="on">11</span><span>12</span><span>13</span>
+              <span class="on">14</span><span>15</span><span class="on">16</span><span>17</span><span class="on">18</span><span>19</span><span class="today">20</span>
+              <span>21</span><span>22</span><span>23</span><span>24</span><span>25</span><span>26</span><span>27</span>
+            </div>
+          </div>
+          <h2 style="margin-top:20px">Recent</h2>
+          <div class="row"><div><b>Push day</b> <small>· Fri 18 Oct · 58 min</small></div><small>›</small></div>
+        </section>
+        <section>
+          <h2>Train</h2>
+          <div class="live" style="margin-bottom:16px"><div style="flex:1"><small>In progress</small><br><b>Push day</b></div><span class="t num">24:13</span></div>
+          <div class="startlist">
+            <div class="row"><div><b>Pull day</b><br><small>6 exercises</small></div><span class="go">Start ›</span></div>
+            <div class="row"><div><b>Legs</b><br><small>5 exercises</small></div><span class="go">Start ›</span></div>
+            <div class="row"><div><b>Upper body</b><br><small>7 exercises</small></div><span class="go">Start ›</span></div>
+          </div>
+          <div style="margin-top:8px;display:flex;gap:8px"><span class="btn ghost">+ Empty workout</span><span class="btn ghost">All templates</span></div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- A3 -->
+<div class="variant" data-choice="a3" onclick="toggleSelect(this)">
+  <div class="vhead"><span class="letter">A3</span><b>Un singur „Up next” mare</b><span>Train devine un card cu antrenamentul sugerat și ce ai ridicat data trecută; celelalte template-uri sunt butoane mici</span></div>
+  <div class="screen">
+    <aside class="rail"><div class="brand">Gym Weight Tracker</div><div class="startbtn"><svg class="i" viewBox="0 0 24 24" style="stroke-width:2.6"><path d="M12 5v14M5 12h14"/></svg>Start workout</div><div class="nav on"><svg class="i" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</div><div class="nav"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>History</div><div class="nav"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/></svg>Templates</div><div class="nav"><svg class="i" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0zM12 13v4M8 21h8"/></svg>Records</div><div class="me"><div class="av"></div><div><b>Remus</b><small>Profile</small></div></div></aside>
+    <main>
+      <h1>Hi, Remus</h1>
+      <div class="today">
+        <section>
+          <div class="next">
+            <small>Up next · you last did it Wed 16 Oct</small>
+            <p class="name">Legs</p>
+            <div class="lt">
+              <span class="h">Exercise</span><span class="h">Last time</span><span class="h">Best</span>
+              <span>Squat</span><span class="v num">100 kg × 8</span><span class="m num" style="text-align:right">105 kg × 6</span>
+              <span>Romanian deadlift</span><span class="v num">80 kg × 10</span><span class="m num" style="text-align:right">85 kg × 8</span>
+              <span>Leg press</span><span class="v num">180 kg × 12</span><span class="m num" style="text-align:right">180 kg × 12</span>
+              <span>Leg curl</span><span class="v num">45 kg × 12</span><span class="m num" style="text-align:right">50 kg × 10</span>
+              <span class="m">+1 more</span><span></span><span></span>
+            </div>
+            <span class="btn" style="padding:12px 22px;font-size:16px">Start Legs</span>
+          </div>
+          <div class="chips"><span class="m" style="align-self:center">Or start:</span><span class="chip">Pull day</span><span class="chip">Push day</span><span class="chip">Upper body</span><span class="chip">+ Empty</span></div>
+        </section>
+        <section>
+          <h2>Last 30 days <a>History ›</a></h2>
+          <div class="stats" style="margin-bottom:18px"><div class="stat"><small>Workouts</small><b>12</b></div><div class="stat"><small>Last</small><b>18 Oct</b></div><div class="stat"><small>Average</small><b class="acc">54<span>min</span></b></div></div>
+          <h2>Recent</h2>
+          <div class="row"><div><b>Push day</b><br><small>Fri 18 Oct · 58 min</small></div><small>›</small></div>
+          <div class="row"><div><b>Legs</b><br><small>Wed 16 Oct · 61 min</small></div><small>›</small></div>
+          <div class="row"><div><b>Pull day</b><br><small>Mon 14 Oct · 49 min</small></div><small>›</small></div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<p class="intro m">Date de exemplu, nu din contul tău.</p>
+</body></html>
