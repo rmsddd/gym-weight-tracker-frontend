@@ -83,6 +83,15 @@ function clearUser() {
   state.user = null
 }
 
+// What the user's role allows, as sent with the user; the API refuses the rest anyway
+function can(permission) {
+  return state.user?.permissions?.includes(permission) ?? false
+}
+
+function isRoot() {
+  return state.user?.role === 'root'
+}
+
 export const authStore = {
   state: readonly(state),
   fetchUser,
@@ -93,6 +102,8 @@ export const authStore = {
   updateName,
   setUsername,
   clearUser,
+  can,
+  isRoot,
 }
 
 export default authStore

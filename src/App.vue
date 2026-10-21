@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import authStore from './stores/auth'
 import workoutFocus from './stores/workoutFocus'
+import notice from './stores/notice'
 import AppNav from './components/ui/AppNav.vue'
 
 const route = useRoute()
@@ -23,6 +24,15 @@ const showNav = computed(
     <router-view />
   </div>
   <AppNav v-if="showNav" />
+  <v-snackbar
+    :model-value="notice.state.isVisible"
+    :timeout="4000"
+    location="top"
+    color="surface-bright"
+    @update:model-value="notice.hide"
+  >
+    {{ notice.state.message }}
+  </v-snackbar>
 </template>
 
 <style>

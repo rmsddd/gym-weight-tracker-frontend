@@ -17,6 +17,15 @@ api.interceptors.response.use(
       authStore.clearUser()
     }
 
+    // Root took a permission away while the app was open: say so, and learn what is still allowed
+    // so the app hides the rest. Other 403s (not the owner, not friends) are the page's to handle
+    if (error.response?.status === 403 && error.response.data?.code === 'permission_denied') {
+      const { authStore } = await import('../stores/auth')
+      const { notice } = await import('../stores/notice')
+      notice.show(error.response.data.message)
+      authStore.fetchUser()
+    }
+
     return Promise.reject(error)
   },
 )
