@@ -22,6 +22,15 @@ defineProps({ animated: { type: Boolean, default: false } })
   z-index: 0;
 }
 
+/* A phone's browser paints a flat bar over the notch: fade the glow into the floor at the top so
+   the bar runs into the page without an edge. Installed to the home screen, the glow goes under it */
+@media (max-width: 600px) and (display-mode: browser) {
+  .ambient {
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 140px);
+    mask-image: linear-gradient(to bottom, transparent, #000 140px);
+  }
+}
+
 .blob {
   position: absolute;
   border-radius: 50%;
