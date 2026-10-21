@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../services/api'
+import authStore from '../stores/auth'
 import AmbientBackground from './ui/AmbientBackground.vue'
 import BaseButton from './ui/BaseButton.vue'
 import FormCard from './ui/FormCard.vue'
@@ -26,6 +27,9 @@ const templateId = ref(null)
 let suggestedName = ''
 
 onMounted(async () => {
+  // Without templates.view there is simply no template to pick
+  if (!authStore.can('templates.view')) return
+
   try {
     const response = await api.get('/workout-templates')
     templates.value = response.data.data ?? response.data

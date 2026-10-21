@@ -15,6 +15,7 @@ import SkeletonList from './ui/SkeletonList.vue'
 const RECENT_LIMIT = 5
 
 const router = useRouter()
+const { can } = authStore
 
 const workouts = ref([])
 const isLoading = ref(true)
@@ -27,6 +28,12 @@ let timerId = null
 onBeforeUnmount(() => clearInterval(timerId))
 
 onMounted(async () => {
+  // A role that may not see workouts gets the page without them
+  if (!can('workouts.view')) {
+    isLoading.value = false
+    return
+  }
+
   try {
     const response = await api.get('/workouts')
     workouts.value = response.data.data ?? response.data
@@ -170,10 +177,13 @@ async function confirmDelete() {
             <!-- The phone's tab bar has no History tab, so this is its way in -->
             <div class="section-head">
               <h2 class="section-title">Recent workouts</h2>
-              <RouterLink to="/history" class="history-link">History →</RouterLink>
+              <RouterLink v-if="can('workouts.view')" to="/history" class="history-link"
+                >History →</RouterLink
+              >
             </div>
 
             <SkeletonList v-if="isLoading" :rows="3" />
+            <p v-else-if="!can('workouts.view')" class="quiet">Your role cannot see workouts.</p>
             <div v-else-if="sortedWorkouts.length === 0" class="empty-state">
               <Avatar :code="authStore.state.user?.avatar" :size="64" />
               <div class="empty-copy">
@@ -181,7 +191,7 @@ async function confirmDelete() {
                 <p class="empty-text">
                   Start one and log your sets as you go. Your history and records build from there.
                 </p>
-                <BaseButton @click="router.push('/workouts/new')"
+                <BaseButton v-if="can('workouts.create')" @click="router.push('/workouts/new')"
                   >Start your first workout</BaseButton
                 >
               </div>
@@ -210,6 +220,7 @@ async function confirmDelete() {
 
                   <div class="row-actions">
                     <v-btn
+                      v-if="can('workouts.delete')"
                       :icon="mdiDeleteOutline"
                       variant="text"
                       size="small"

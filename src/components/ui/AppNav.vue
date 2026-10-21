@@ -16,6 +16,7 @@ import friendsStore from '../../stores/friends'
 import Avatar from './Avatar.vue'
 
 const route = useRoute()
+const { can } = authStore
 const { isStarting, startWorkout } = useStartWorkout()
 
 // Pages without a tab of their own light the tab they are reached from: Records from Profile,
@@ -36,26 +37,48 @@ function isRailActive(to) {
 // still without a username has none to check
 watch(
   () => route.path,
-  () => authStore.state.user?.username && friendsStore.refreshIncomingCount(),
+  () =>
+    authStore.state.user?.username &&
+    can('friends.requests') &&
+    friendsStore.refreshIncomingCount(),
   { immediate: true },
 )
 const incomingCount = computed(() => friendsStore.state.incomingCount)
 
+// An entry needing a permission the role lacks is left out; on the tab bar its slot stays empty,
+// so the ＋ button keeps the middle
 const tabs = [
   { title: 'Home', icon: mdiHomeOutline, to: '/dashboard' },
-  { title: 'Templates', icon: mdiClipboardListOutline, to: '/templates' },
+  {
+    title: 'Templates',
+    icon: mdiClipboardListOutline,
+    to: '/templates',
+    permission: 'templates.view',
+  },
   null, // the ＋ button sits in the middle
-  { title: 'Friends', icon: mdiAccountMultipleOutline, to: '/friends' },
+  { title: 'Friends', icon: mdiAccountMultipleOutline, to: '/friends', permission: 'friends.view' },
   { title: 'Profile', icon: mdiAccountOutline, to: '/profile' },
 ]
 
-const railItems = [
-  { title: 'Home', icon: mdiHomeOutline, to: '/dashboard' },
-  { title: 'Templates', icon: mdiClipboardListOutline, to: '/templates' },
-  { title: 'History', icon: mdiHistory, to: '/history' },
-  { title: 'Records', icon: mdiTrophyOutline, to: '/records' },
-  { title: 'Friends', icon: mdiAccountMultipleOutline, to: '/friends' },
-]
+const railItems = computed(() =>
+  [
+    { title: 'Home', icon: mdiHomeOutline, to: '/dashboard' },
+    {
+      title: 'Templates',
+      icon: mdiClipboardListOutline,
+      to: '/templates',
+      permission: 'templates.view',
+    },
+    { title: 'History', icon: mdiHistory, to: '/history', permission: 'workouts.view' },
+    { title: 'Records', icon: mdiTrophyOutline, to: '/records', permission: 'stats.view' },
+    {
+      title: 'Friends',
+      icon: mdiAccountMultipleOutline,
+      to: '/friends',
+      permission: 'friends.view',
+    },
+  ].filter((item) => !item.permission || can(item.permission)),
+)
 
 const firstName = computed(() => authStore.state.user?.name?.split(' ')[0] ?? '')
 </script>
@@ -76,8 +99,13 @@ const firstName = computed(() => authStore.state.user?.name?.split(' ')[0] ?? ''
       />
     </svg>
     <template v-for="tab in tabs" :key="tab?.to ?? 'start'">
+      <span
+        v-if="tab === null ? !can('workouts.create') : tab.permission && !can(tab.permission)"
+        class="tab"
+        aria-hidden="true"
+      ></span>
       <button
-        v-if="tab === null"
+        v-else-if="tab === null"
         type="button"
         class="tab start-tab"
         aria-label="Start workout"
@@ -110,7 +138,13 @@ const firstName = computed(() => authStore.state.user?.name?.split(' ')[0] ?? ''
   <nav class="rail" aria-label="Main">
     <p class="brand">Gym Weight Tracker</p>
 
-    <button type="button" class="rail-start" :disabled="isStarting" @click="startWorkout">
+    <button
+      v-if="can('workouts.create')"
+      type="button"
+      class="rail-start"
+      :disabled="isStarting"
+      @click="startWorkout"
+    >
       <v-icon :icon="mdiPlus" size="22" />
       Start workout
     </button>

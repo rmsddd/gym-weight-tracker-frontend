@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { mdiPlus } from '@mdi/js'
 import api from '../services/api'
+import authStore from '../stores/auth'
 import friendsStore from '../stores/friends'
 import { usePolling } from '../composables/usePolling'
 import { formatElapsed, liveWorkoutSeconds } from '../utils/formatElapsed'
@@ -14,6 +15,7 @@ import SkeletonList from './ui/SkeletonList.vue'
 const POLL_MS = 15000
 
 const router = useRouter()
+const { can } = authStore
 
 const friends = ref([])
 const incoming = ref([])
@@ -31,7 +33,8 @@ async function load() {
   try {
     const [friendsRes, requests] = await Promise.all([
       api.get('/friends'),
-      friendsStore.fetchRequests(),
+      // Without friends.requests the requests section just stays empty
+      can('friends.requests') ? friendsStore.fetchRequests() : { incoming: [], outgoing: [] },
     ])
     friends.value = friendsRes.data.data
     incoming.value = requests.incoming
@@ -82,7 +85,11 @@ async function answer(request, action) {
 <template>
   <PageLayout title="Friends">
     <template #actions>
-      <BaseButton size="sm" :prepend-icon="mdiPlus" @click="router.push('/friends/add')"
+      <BaseButton
+        v-if="can('friends.search')"
+        size="sm"
+        :prepend-icon="mdiPlus"
+        @click="router.push('/friends/add')"
         >Add friends</BaseButton
       >
     </template>
@@ -121,12 +128,14 @@ async function answer(request, action) {
               <span class="who-handle">@{{ request.user.username }}</span>
             </span>
             <BaseButton
+              v-if="can('friends.accept-request')"
               size="sm"
               :disabled="busyRequests.has(request.id)"
               @click="answer(request, 'accept')"
               >Accept</BaseButton
             >
             <BaseButton
+              v-if="can('friends.remove')"
               size="sm"
               variant="secondary"
               :disabled="busyRequests.has(request.id)"
@@ -141,6 +150,7 @@ async function answer(request, action) {
               <span class="who-handle">Request sent</span>
             </span>
             <v-btn
+              v-if="can('friends.remove')"
               variant="text"
               size="small"
               :disabled="busyRequests.has(request.id)"
@@ -160,7 +170,9 @@ async function answer(request, action) {
             Find someone by their username and send a request. Once they accept, you see when
             they're at the gym and what they lift.
           </p>
-          <BaseButton @click="router.push('/friends/add')">Add friends</BaseButton>
+          <BaseButton v-if="can('friends.search')" @click="router.push('/friends/add')"
+            >Add friends</BaseButton
+          >
         </div>
 
         <ul v-else class="friend-list">

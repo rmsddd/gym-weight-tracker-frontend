@@ -3,12 +3,14 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { mdiTune } from '@mdi/js'
 import api from '../services/api'
+import authStore from '../stores/auth'
 import catalogStore from '../stores/catalog'
 import PageLayout from './ui/PageLayout.vue'
 import SkeletonList from './ui/SkeletonList.vue'
 
 const route = useRoute()
 const router = useRouter()
+const { can } = authStore
 
 const workouts = ref([])
 const exercises = ref([])
@@ -123,10 +125,11 @@ onMounted(async () => {
   loadWorkouts()
   try {
     const [exerciseList, deletedList, categoryList] = await Promise.all([
-      catalogStore.getExercises(),
+      // A role that may not see the catalog filters by date only
+      can('exercises.view') ? catalogStore.getExercises() : [],
       // Optional: the filter still works with the current exercises if this one fails
-      catalogStore.getDeletedExercises().catch(() => []),
-      catalogStore.getCategories(),
+      can('exercises.view') ? catalogStore.getDeletedExercises().catch(() => []) : [],
+      can('categories.view') ? catalogStore.getCategories() : [],
     ])
     // Deleted exercises stay in the workouts that logged them, so their history can still be filtered
     exercises.value = [...exerciseList, ...deletedList.map((e) => ({ ...e, name: `${e.name} (deleted)` }))]
@@ -138,6 +141,8 @@ onMounted(async () => {
 })
 
 onMounted(async () => {
+  if (!can('stats.view')) return
+
   try {
     const response = await api.get('/monthly-stats')
     monthlyStats.value = response.data.data ?? response.data

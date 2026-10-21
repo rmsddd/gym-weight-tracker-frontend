@@ -17,6 +17,7 @@ import ConfirmDialog from './ui/ConfirmDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
+const { can } = authStore
 const workoutId = route.params.id
 
 const workout = ref(null)
@@ -154,12 +155,13 @@ function goBack() {
 }
 
 async function loadAll() {
+  // Whatever the role may not see is left empty instead of failing the whole page
   try {
     const [workoutRes, weRes, exerciseList, categoryList] = await Promise.all([
       api.get(`/workouts/${workoutId}`),
-      api.get(`/workouts/${workoutId}/exercises`),
-      catalogStore.getExercises(),
-      catalogStore.getCategories(),
+      can('workout-exercises.view') ? api.get(`/workouts/${workoutId}/exercises`) : { data: [] },
+      can('exercises.view') ? catalogStore.getExercises() : [],
+      can('categories.view') ? catalogStore.getCategories() : [],
     ])
     workout.value = workoutRes.data.data ?? workoutRes.data
     workoutExercises.value = weRes.data.data ?? weRes.data
@@ -170,7 +172,7 @@ async function loadAll() {
     setError('Could not load the workout.', error)
   }
 
-  await Promise.all([loadBests(), loadPreviousSets()])
+  await Promise.all([can('stats.view') ? loadBests() : null, loadPreviousSets()])
 }
 
 // What the user lifted the last time they did each exercise in this workout
@@ -566,7 +568,7 @@ onBeforeUnmount(() => {
         <button type="button" class="back" @click="goBack"><v-icon :icon="mdiArrowLeft" size="18" />Back</button>
 
         <v-btn
-          v-if="workout"
+          v-if="workout && can('workouts.delete')"
           class="delete-workout"
           :prepend-icon="mdiDeleteOutline"
           variant="outlined"
@@ -591,9 +593,9 @@ onBeforeUnmount(() => {
         </div>
 
         <div v-if="!isCompleted" class="timer-actions">
-          <BaseButton v-if="isFinished" :disabled="isResuming" @click="resumeWorkout">Start</BaseButton>
-          <BaseButton v-else variant="danger" :disabled="isStopping" @click="stopWorkout">Stop</BaseButton>
-          <BaseButton variant="secondary" @click="isCompleteOpen = true">Finish</BaseButton>
+          <BaseButton v-if="isFinished && can('workouts.resume')" :disabled="isResuming" @click="resumeWorkout">Start</BaseButton>
+          <BaseButton v-else-if="!isFinished && can('workouts.finish')" variant="danger" :disabled="isStopping" @click="stopWorkout">Stop</BaseButton>
+          <BaseButton v-if="can('workouts.complete')" variant="secondary" @click="isCompleteOpen = true">Finish</BaseButton>
         </div>
         <p v-else class="finished-tag">Finished</p>
       </section>
@@ -605,7 +607,7 @@ onBeforeUnmount(() => {
           <h2 class="section-title">Exercises</h2>
           <!-- A quiet text button: it belongs to the list, but is not needed while logging sets -->
           <v-btn
-            v-if="workoutExercises.length > 0"
+            v-if="workoutExercises.length > 0 && can('templates.create')"
             class="save-template"
             :prepend-icon="mdiClipboardListOutline"
             variant="text"
@@ -625,7 +627,7 @@ onBeforeUnmount(() => {
         <VueDraggable
           v-model="workoutExercises"
           handle=".drag-handle"
-          :disabled="isFinished"
+          :disabled="isFinished || !can('workouts.update')"
           :animation="150"
           ghost-class="exercise-ghost"
           chosen-class="exercise-chosen"
@@ -635,7 +637,7 @@ onBeforeUnmount(() => {
           <div v-for="we in workoutExercises" :key="we.id" class="exercise-block">
             <div class="exercise-head">
               <button
-                v-if="!isFinished && workoutExercises.length > 1"
+                v-if="!isFinished && workoutExercises.length > 1 && can('workouts.update')"
                 type="button"
                 class="drag-handle"
                 aria-label="Drag to change the order"
@@ -666,7 +668,7 @@ onBeforeUnmount(() => {
                 </p>
               </div>
               <button
-                v-if="!isFinished"
+                v-if="!isFinished && can('workout-exercises.delete')"
                 type="button"
                 class="icon-btn"
                 aria-label="Delete exercise"
@@ -681,7 +683,7 @@ onBeforeUnmount(() => {
                 <span class="set-number">Set {{ index + 1 }}</span>
                 <span>{{ formatSet(set) }}</span>
                 <button
-                  v-if="!isFinished"
+                  v-if="!isFinished && can('workout-sets.delete')"
                   type="button"
                   class="icon-btn"
                   aria-label="Delete set"
@@ -692,7 +694,7 @@ onBeforeUnmount(() => {
               </li>
             </ul>
   
-            <form v-if="!isFinished" class="set-form" novalidate @submit.prevent="addSet(we)">
+            <form v-if="!isFinished && can('workout-sets.create')" class="set-form" novalidate @submit.prevent="addSet(we)">
               <v-text-field
                 v-if="isTimed(we)"
                 v-model="setInputs[we.id].duration"
@@ -741,7 +743,7 @@ onBeforeUnmount(() => {
         </VueDraggable>
 
         <BaseButton
-          v-if="!isFinished"
+          v-if="!isFinished && can('workout-exercises.create')"
           :variant="workoutExercises.length === 0 ? 'primary' : 'secondary'"
           block
           class="add-exercise"
@@ -773,7 +775,7 @@ onBeforeUnmount(() => {
         <p v-if="pickerError" class="error" role="alert">{{ pickerError }}</p>
 
         <div class="picker-body">
-          <div v-if="noResults" class="create-box">
+          <div v-if="noResults && can('exercises.create')" class="create-box">
             <p class="muted">No results for “{{ searchTerm }}”.</p>
             <v-select
               v-model="newExerciseCategoryId"
@@ -807,7 +809,7 @@ onBeforeUnmount(() => {
                 </span>
                 <span class="picker-actions">
                   <button
-                    v-if="exercise.is_custom"
+                    v-if="exercise.is_custom && can('exercises.delete')"
                     type="button"
                     class="icon-btn"
                     :aria-label="`Delete ${exercise.name}`"

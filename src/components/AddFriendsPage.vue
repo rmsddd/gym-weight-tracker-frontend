@@ -2,10 +2,13 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { mdiMagnify } from '@mdi/js'
 import api from '../services/api'
+import authStore from '../stores/auth'
 import friendsStore from '../stores/friends'
 import Avatar from './ui/Avatar.vue'
 import BaseButton from './ui/BaseButton.vue'
 import PageLayout from './ui/PageLayout.vue'
+
+const { can } = authStore
 
 const MIN_QUERY = 2
 const DEBOUNCE_MS = 300
@@ -72,7 +75,7 @@ async function act(user, request) {
       user.friendship = null
       user.request_id = null
     }
-    friendsStore.refreshIncomingCount()
+    if (can('friends.requests')) friendsStore.refreshIncomingCount()
   } catch (error) {
     errorMessage.value = error.response?.data?.message ?? 'Something went wrong. Try again.'
     console.error('Friend request failed:', error)
@@ -127,19 +130,24 @@ const cancel = (user) => act(user, () => api.delete(`/friend-requests/${user.req
         >
         <template v-else-if="user.friendship === 'outgoing'">
           <span class="state">Sent</span>
-          <v-btn variant="text" size="small" :disabled="busyIds.has(user.id)" @click="cancel(user)"
+          <v-btn
+            v-if="can('friends.remove')"
+            variant="text"
+            size="small"
+            :disabled="busyIds.has(user.id)"
+            @click="cancel(user)"
             >Cancel</v-btn
           >
         </template>
         <BaseButton
-          v-else-if="user.friendship === 'incoming'"
+          v-else-if="user.friendship === 'incoming' && can('friends.accept-request')"
           size="sm"
           :disabled="busyIds.has(user.id)"
           @click="accept(user)"
           >Accept</BaseButton
         >
         <BaseButton
-          v-else
+          v-else-if="user.friendship == null && can('friends.send-request')"
           size="sm"
           variant="secondary"
           :disabled="busyIds.has(user.id)"

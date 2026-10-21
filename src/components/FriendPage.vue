@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { mdiChevronDown } from '@mdi/js'
 import api from '../services/api'
+import authStore from '../stores/auth'
 import { usePolling } from '../composables/usePolling'
 import { formatElapsed, liveWorkoutSeconds } from '../utils/formatElapsed'
 import { formatSet } from '../utils/formatSet'
@@ -18,6 +19,7 @@ const OFFLINE_POLL_MS = 30000
 
 const route = useRoute()
 const router = useRouter()
+const { can } = authStore
 
 const friend = ref(null)
 const isLoading = ref(true)
@@ -170,7 +172,12 @@ async function removeFriend() {
         </ul>
       </section>
 
-      <v-btn variant="text" color="danger" class="remove" @click="isRemoveOpen = true"
+      <v-btn
+        v-if="can('friends.remove')"
+        variant="text"
+        color="danger"
+        class="remove"
+        @click="isRemoveOpen = true"
         >Remove friend</v-btn
       >
     </template>

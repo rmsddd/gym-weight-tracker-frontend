@@ -46,27 +46,42 @@ const router = createRouter({
       meta: { public: true },
     },
     { path: '/dashboard', name: 'dashboard', component: Dashboard, meta: { requiresAuth: true } },
-    { path: '/records', name: 'records', component: PersonalRecords, meta: { requiresAuth: true } },
-    { path: '/history', name: 'history', component: HistoryPage, meta: { requiresAuth: true } },
+    {
+      path: '/records',
+      name: 'records',
+      component: PersonalRecords,
+      meta: { requiresAuth: true, permission: 'stats.view' },
+    },
+    {
+      path: '/history',
+      name: 'history',
+      component: HistoryPage,
+      meta: { requiresAuth: true, permission: 'workouts.view' },
+    },
     {
       path: '/templates',
       name: 'templates',
       component: TemplatesPage,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, permission: 'templates.view' },
     },
     { path: '/profile', name: 'profile', component: ProfilePage, meta: { requiresAuth: true } },
-    { path: '/friends', name: 'friends', component: FriendsPage, meta: { requiresAuth: true } },
+    {
+      path: '/friends',
+      name: 'friends',
+      component: FriendsPage,
+      meta: { requiresAuth: true, permission: 'friends.view' },
+    },
     {
       path: '/friends/add',
       name: 'friends-add',
       component: AddFriendsPage,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, permission: 'friends.search' },
     },
     {
       path: '/friends/:username',
       name: 'friend',
       component: FriendPage,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, permission: 'friends.view' },
     },
     // Accounts from before usernames existed land here until they choose one
     {
@@ -79,13 +94,13 @@ const router = createRouter({
       path: '/workouts/new',
       name: 'workout-new',
       component: AddWorkoutForm,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, permission: 'workouts.create' },
     },
     {
       path: '/workouts/:id',
       name: 'workout-active',
       component: ActiveWorkout,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, permission: 'workouts.view' },
     },
     {
       path: '/:pathMatch(.*)*',
@@ -124,6 +139,11 @@ router.beforeEach(async (to) => {
     return { name: 'dashboard' }
   }
 
+  // A page for something the role may not do is not opened: back to the dashboard
+  if (to.meta.permission && !authStore.can(to.meta.permission)) {
+    return { name: 'dashboard' }
+  }
+
   return true
 })
 
@@ -134,7 +154,11 @@ router.afterEach(() => {
   if (hasPrefetched || authStore.state.user === null) return
   hasPrefetched = true
   const idle = window.requestIdleCallback ?? ((callback) => setTimeout(callback, 1500))
-  idle(() => [HistoryPage, TemplatesPage, FriendsPage, ProfilePage, ActiveWorkout].forEach((load) => load().catch(() => {})))
+  idle(() =>
+    [HistoryPage, TemplatesPage, FriendsPage, ProfilePage, ActiveWorkout].forEach((load) =>
+      load().catch(() => {}),
+    ),
+  )
 })
 
 export default router

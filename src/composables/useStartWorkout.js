@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../services/api'
+import authStore from '../stores/auth'
 
 // Local date, not toISOString(): that one is UTC and gives yesterday or tomorrow near midnight
 function todayLocal() {
@@ -19,6 +20,12 @@ export function useStartWorkout() {
     isStarting.value = true
 
     try {
+      // A role that may not see workouts cannot look for the running one: just start a new one
+      if (!authStore.can('workouts.view')) {
+        await router.push('/workouts/new')
+        return
+      }
+
       const response = await api.get('/workouts')
       const workouts = response.data.data ?? response.data
       const running = workouts

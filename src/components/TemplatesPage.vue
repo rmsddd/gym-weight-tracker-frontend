@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { mdiDeleteOutline } from '@mdi/js'
 import api from '../services/api'
 import { useStartWorkout } from '../composables/useStartWorkout'
+import authStore from '../stores/auth'
 import catalogStore from '../stores/catalog'
 import BaseButton from './ui/BaseButton.vue'
 import PageLayout from './ui/PageLayout.vue'
@@ -12,6 +13,7 @@ import ConfirmDialog from './ui/ConfirmDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
+const { can } = authStore
 const { startingTemplateId, startFromTemplate } = useStartWorkout()
 
 const templates = ref([])
@@ -162,7 +164,9 @@ async function confirmDelete() {
 
     <SkeletonList v-if="isLoading" />
     <template v-else>
-      <BaseButton block @click="openCreate">+ New template</BaseButton>
+      <BaseButton v-if="can('templates.create') && can('exercises.view')" block @click="openCreate">
+        + New template
+      </BaseButton>
 
       <p v-if="templates.length === 0 && !errorMessage" class="muted">
         No templates yet. Create one here, or open a workout and choose “Save as template” from its menu.
@@ -175,10 +179,16 @@ async function confirmDelete() {
             <p class="template-meta">{{ template.exercises.map((e) => e.name).join(' · ') }}</p>
           </div>
           <div class="template-actions">
-            <BaseButton size="sm" :disabled="startingTemplateId !== null" @click="startFrom(template)">
+            <BaseButton
+              v-if="can('workouts.create')"
+              size="sm"
+              :disabled="startingTemplateId !== null"
+              @click="startFrom(template)"
+            >
               {{ startingTemplateId === template.id ? 'Starting…' : 'Start' }}
             </BaseButton>
             <v-btn
+              v-if="can('templates.delete')"
               :icon="mdiDeleteOutline"
               variant="text"
               size="small"
@@ -190,7 +200,11 @@ async function confirmDelete() {
         </li>
       </ul>
 
-      <v-btn v-if="templates.length > 0" variant="outlined" @click="router.push('/workouts/new')">
+      <v-btn
+        v-if="templates.length > 0 && can('workouts.create')"
+        variant="outlined"
+        @click="router.push('/workouts/new')"
+      >
         Start an empty workout
       </v-btn>
     </template>

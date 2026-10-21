@@ -10,12 +10,16 @@ import BodyAvatar from './ui/BodyAvatar.vue'
 import PageLayout from './ui/PageLayout.vue'
 
 const router = useRouter()
+const { can } = authStore
 
 const totals = ref({ workouts_count: 0, total_minutes: 0, records_count: 0 })
 const isPickerOpen = ref(false)
 const muscleStats = ref([])
 
 onMounted(async () => {
+  // Without stats the page keeps its zeros
+  if (!can('stats.view')) return
+
   try {
     // Totals come pre-computed, instead of downloading every workout and record to count them
     const [totalsRes, musclesRes] = await Promise.all([
@@ -99,7 +103,14 @@ async function handleLogout() {
     <v-card color="surface-bright" border class="panel build">
       <div class="build-figure">
         <BodyAvatar :code="user?.avatar" :levels="muscleLevels" :width="150" />
-        <BaseButton variant="secondary" size="sm" @click="isPickerOpen = true">Change avatar</BaseButton>
+        <BaseButton
+          v-if="can('profile.update-avatar')"
+          variant="secondary"
+          size="sm"
+          @click="isPickerOpen = true"
+        >
+          Change avatar
+        </BaseButton>
       </div>
 
       <div class="build-info">
@@ -140,7 +151,9 @@ async function handleLogout() {
       </form>
       <div v-else class="name-row">
         <p class="value">{{ user?.name }}</p>
-        <v-btn variant="text" size="small" @click="startEditingName">Edit</v-btn>
+        <v-btn v-if="can('profile.update-name')" variant="text" size="small" @click="startEditingName"
+          >Edit</v-btn
+        >
       </div>
       <p class="label">Username</p>
       <p class="value">@{{ user?.username }}</p>
@@ -158,7 +171,7 @@ async function handleLogout() {
     </section>
 
     <!-- The phone's tab bar has no Records tab, so this is its way in -->
-    <RouterLink to="/records" class="records-link pressable">
+    <RouterLink v-if="can('stats.view')" to="/records" class="records-link pressable">
       <v-icon :icon="mdiTrophyOutline" size="22" class="records-icon" />
       <span class="records-text">Personal records</span>
       <v-icon :icon="mdiChevronRight" size="20" class="records-chevron" />
