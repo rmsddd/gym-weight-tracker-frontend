@@ -81,15 +81,17 @@ the service: a request from B to A while A→B is pending accepts it instead of 
 
 ## Online status
 
-- A user is **online** when they have a workout with `started_at` set and `finished_at = null`, i.e.
-  they have not pressed Finish. **No time cutoff**: the user explicitly chose this over an earlier
-  3-hour cutoff, accepting that someone who forgets to stop shows online until they do.
-- A stopped workout (`finished_at` set, `completed_at` null, can still be resumed) counts as
-  **offline**; resuming it makes them online again.
+- A user is **online** when they have a workout with `started_at` set and `completed_at = null`,
+  i.e. they have not pressed **Finish** (`POST /workouts/{id}/complete`). Pressing **Stop**
+  (`POST /workouts/{id}/finish`, which sets `finished_at`) keeps them **online**; only Finish makes
+  them offline. **No time cutoff**: the user explicitly chose this over an earlier 3-hour cutoff,
+  accepting that someone who never presses Finish shows online until they do.
 - **Time elapsed** shown to friends counts from the last start or resume, not the original
   `started_at`, so a workout resumed the next day doesn't read "24 h" **(Claude's call)**. This needs
-  a new nullable `workouts.resumed_at` column, set by `WorkoutService::resume`; elapsed =
-  now − (`resumed_at` ?? `started_at`). The owner's own timer is unchanged.
+  a new nullable `workouts.resumed_at` column, set by `WorkoutService::resume`. While running:
+  now − (`resumed_at` ?? `started_at`), ticking. While stopped: frozen at
+  `finished_at` − (`resumed_at` ?? `started_at`), with a "Stopped" label next to it
+  **(Claude's call)**. The owner's own timer is unchanged.
 - If more than one workout qualifies, the most recently started or resumed one is shown **(Claude's call)**.
 
 ## Screens
@@ -150,7 +152,7 @@ building UI; the builder should show one for the Friends page and the friend's p
   yourself only).
 - Feature tests next to the existing ones in `tests/Feature/`: username rules and immutability,
   request lifecycle, non-friends get 403 on workouts, email and `note` never present in social
-  payloads, online/offline across start, stop and resume, elapsed time after a resume, and the existing `RouteProtectionTest` extended to the new routes.
+  payloads, online/offline across start, stop, resume and finish, elapsed time after a resume, and the existing `RouteProtectionTest` extended to the new routes.
 
 ## Left to the builder
 
