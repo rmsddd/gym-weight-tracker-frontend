@@ -620,7 +620,13 @@ onBeforeUnmount(() => {
         </header>
 
         <p v-if="workoutExercises.length === 0" class="muted empty">
-          {{ isFinished ? 'No exercises were logged.' : 'No exercises yet. Add the first one to start logging sets.' }}
+          {{
+            isFinished
+              ? 'No exercises were logged.'
+              : can('workout-exercises.create')
+                ? 'No exercises yet. Add the first one to start logging sets.'
+                : 'No exercises yet.'
+          }}
         </p>
 
         <!-- Dragged by the handle only, so scrolling and typing in the set fields work as usual -->

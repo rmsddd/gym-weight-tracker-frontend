@@ -19,6 +19,7 @@ const FriendsPage = () => import('../components/FriendsPage.vue')
 const AddFriendsPage = () => import('../components/AddFriendsPage.vue')
 const FriendPage = () => import('../components/FriendPage.vue')
 const ChooseUsernamePage = () => import('../components/ChooseUsernamePage.vue')
+const AdminPage = () => import('../components/AdminPage.vue')
 
 const router = createRouter({
   history: createWebHistory(),
@@ -102,6 +103,13 @@ const router = createRouter({
       component: ActiveWorkout,
       meta: { requiresAuth: true, permission: 'workouts.view' },
     },
+    // The root account's page: roles, their permissions and who has which
+    {
+      path: '/admin',
+      name: 'admin',
+      component: AdminPage,
+      meta: { requiresAuth: true, requiresRoot: true },
+    },
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
@@ -136,6 +144,10 @@ router.beforeEach(async (to) => {
     return { name: 'choose-username' }
   }
   if (!needsUsername && to.meta.choosingUsername) {
+    return { name: 'dashboard' }
+  }
+
+  if (to.meta.requiresRoot && !authStore.isRoot()) {
     return { name: 'dashboard' }
   }
 

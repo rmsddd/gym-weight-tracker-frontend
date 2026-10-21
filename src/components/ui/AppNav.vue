@@ -8,6 +8,7 @@ import {
   mdiHistory,
   mdiHomeOutline,
   mdiPlus,
+  mdiShieldAccountOutline,
   mdiTrophyOutline,
 } from '@mdi/js'
 import { useStartWorkout } from '../../composables/useStartWorkout'
@@ -77,7 +78,10 @@ const railItems = computed(() =>
       to: '/friends',
       permission: 'friends.view',
     },
-  ].filter((item) => !item.permission || can(item.permission)),
+    { title: 'Admin', icon: mdiShieldAccountOutline, to: '/admin', rootOnly: true },
+  ].filter(
+    (item) => (!item.permission || can(item.permission)) && (!item.rootOnly || authStore.isRoot()),
+  ),
 )
 
 const firstName = computed(() => authStore.state.user?.name?.split(' ')[0] ?? '')

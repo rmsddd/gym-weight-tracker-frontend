@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { mdiChevronRight, mdiTrophyOutline } from '@mdi/js'
+import { mdiChevronRight, mdiShieldAccountOutline, mdiTrophyOutline } from '@mdi/js'
 import api from '../services/api'
 import authStore from '../stores/auth'
 import AvatarPicker from './ui/AvatarPicker.vue'
@@ -174,6 +174,13 @@ async function handleLogout() {
     <RouterLink v-if="can('stats.view')" to="/records" class="records-link pressable">
       <v-icon :icon="mdiTrophyOutline" size="22" class="records-icon" />
       <span class="records-text">Personal records</span>
+      <v-icon :icon="mdiChevronRight" size="20" class="records-chevron" />
+    </RouterLink>
+
+    <!-- Root's way to the admin page on the phone; the PC rail links it too -->
+    <RouterLink v-if="authStore.isRoot()" to="/admin" class="records-link pressable">
+      <v-icon :icon="mdiShieldAccountOutline" size="22" class="records-icon" />
+      <span class="records-text">Admin</span>
       <v-icon :icon="mdiChevronRight" size="20" class="records-chevron" />
     </RouterLink>
 

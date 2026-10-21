@@ -1,0 +1,39 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Root: split</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}body{margin:0;width:1440px;height:900px;overflow:hidden;background:#08060A;color:#F5F0F4;font-family:Nunito,sans-serif;display:flex}
+.rail{width:232px;background:#1B1720;border-right:1px solid #38333C;padding:24px 16px;display:flex;flex-direction:column;gap:6px}
+.brand{font-weight:800;font-size:15px;margin:0 8px 18px}.ri{padding:10px 12px;border-radius:8px;color:#C9C3CF;font-weight:700;font-size:15px}.ri.on{background:#241F2A;color:#FFB3DE}
+main{flex:1;padding:32px 48px;display:flex;flex-direction:column;gap:22px}h1{margin:0;font-weight:800;font-size:28px}
+.work{flex:1;display:flex;gap:24px;min-height:0}
+.roles{width:280px;background:#1B1720;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:4px}
+.label{font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#9A93A0;margin:8px 10px}
+.role{display:flex;justify-content:space-between;padding:12px 14px;border-radius:8px;font-weight:700;font-size:15px;color:#C9C3CF}.role span{color:#9A93A0;font-weight:600}
+.role.on{background:#2A2531;color:#F5F0F4;box-shadow:inset 3px 0 0 #E8158A}.def{font-size:11px;color:#FFB3DE;margin-left:8px;font-weight:700}
+.new{margin-top:auto;padding:12px 14px;border:1px dashed #423B49;border-radius:8px;color:#FFB3DE;font-weight:700;font-size:15px}
+.pane{flex:1;background:#1B1720;border-radius:12px;padding:20px 24px;display:flex;flex-direction:column;gap:16px}
+.tabs{display:flex;gap:24px;border-bottom:1px solid #38333C}.tab{padding:10px 0;font-weight:700;color:#9A93A0}.tab.on{color:#F5F0F4;box-shadow:inset 0 -2px 0 #E8158A}
+.search{height:40px;border-radius:6px;background:#08060A;border:1px solid #423B49;padding:0 14px;color:#9A93A0;display:flex;align-items:center;font-size:15px}
+.row{display:flex;align-items:center;gap:14px;padding:12px 4px;border-bottom:1px solid #2A2531}.av{width:40px;height:40px;border-radius:50%;background:#2A2531}
+.who{flex:1;display:flex;flex-direction:column}.n{font-weight:700;font-size:15px}.h{font-size:13px;color:#9A93A0}
+.sel{display:inline-flex;justify-content:space-between;width:160px;padding:7px 10px;border:1px solid #423B49;border-radius:6px;background:#08060A}.root{color:#FFB3DE;font-weight:700;width:160px}
+</style></head><body>
+<nav class="rail"><p class="brand">Gym Weight Tracker</p><div class="ri">Home</div><div class="ri">Templates</div><div class="ri">History</div><div class="ri">Records</div><div class="ri">Friends</div><div class="ri on">Admin</div></nav>
+<main><h1>Admin</h1>
+<div class="work">
+<aside class="roles"><p class="label">Roles</p>
+<div class="role on">All users <span>46</span></div>
+<div class="role">sportiv<em class="def">DEFAULT</em> <span>42</span></div>
+<div class="role">limitat <span>3</span></div>
+<div class="role">antrenor <span>1</span></div>
+<div class="new">+ New role</div></aside>
+<section class="pane">
+<div class="tabs"><div class="tab on">People</div><div class="tab">Permissions</div></div>
+<div class="search">Search name, @username or email</div>
+<div class="row"><span class="av"></span><span class="who"><span class="n">Remus Daczo</span><span class="h">@remus · remus@example.com</span></span><span class="root">root</span></div>
+<div class="row"><span class="av"></span><span class="who"><span class="n">Ana Popescu</span><span class="h">@ana.p · ana@example.com</span></span><span class="sel">sportiv <span>▾</span></span></div>
+<div class="row"><span class="av"></span><span class="who"><span class="n">Bogdan Ionescu</span><span class="h">@bogdan · bogdan@example.com</span></span><span class="sel">limitat <span>▾</span></span></div>
+<div class="row"><span class="av"></span><span class="who"><span class="n">Ioana Marin</span><span class="h">@ioana_m · ioana@example.com</span></span><span class="sel">sportiv <span>▾</span></span></div>
+<div class="row"><span class="av"></span><span class="who"><span class="n">Mihai Stan</span><span class="h">@mihai · mihai@example.com</span></span><span class="sel">antrenor <span>▾</span></span></div>
+</section></div></main></body></html>

@@ -6,13 +6,15 @@ defineProps({
   title: { type: String, required: true },
   // { to, label }: a link up to the parent page, shown above the title
   back: { type: Object, default: null },
+  // Pages that work side by side on a PC (the admin page) get more room than the phone column
+  wide: { type: Boolean, default: false },
 })
 </script>
 
 <template>
   <div class="page">
     <AmbientBackground />
-    <main class="container">
+    <main class="container" :class="{ wide }">
       <RouterLink v-if="back" :to="back.to" class="back">
         <v-icon :icon="mdiArrowLeft" size="18" />{{ back.label }}
       </RouterLink>
@@ -44,6 +46,10 @@ defineProps({
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.container.wide {
+  max-width: 1120px;
 }
 
 .back {
