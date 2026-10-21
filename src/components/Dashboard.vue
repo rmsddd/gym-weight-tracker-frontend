@@ -11,7 +11,6 @@ import ConfirmDialog from './ui/ConfirmDialog.vue'
 import BaseButton from './ui/BaseButton.vue'
 import MonthCalendar from './ui/MonthCalendar.vue'
 import SkeletonList from './ui/SkeletonList.vue'
-import TemplateShelf from './ui/TemplateShelf.vue'
 
 const RECENT_LIMIT = 5
 
@@ -119,14 +118,11 @@ async function confirmDelete() {
         </RouterLink>
       </header>
 
-      <!-- Phone: one column, Train then Progress. PC: the month on the left, the rest on the right;
-           workouts start from the rail there, so the Train zone is phone only. -->
+      <!-- Phone: one column. PC: the month on the left, the rest on the right -->
       <div class="dashboard-grid">
         <MonthCalendar class="pc-only" :workouts="pastWorkouts" />
 
         <div>
-          <h2 class="zone-title phone-only">Train</h2>
-
           <section
             v-if="runningWorkouts.length > 0"
             class="continue-section"
@@ -146,12 +142,6 @@ async function confirmDelete() {
               <span class="continue-cta">Continue</span>
             </RouterLink>
           </section>
-
-          <!-- Hidden while a workout runs, so a stray tap cannot start a second one -->
-          <TemplateShelf
-            v-if="!isLoading && runningWorkouts.length === 0"
-            class="train-shelf phone-only"
-          />
 
           <h2 class="zone-title phone-only">Progress</h2>
 
@@ -334,10 +324,6 @@ async function confirmDelete() {
   font-family: var(--font-display);
   font-size: 20px;
   font-weight: 800;
-}
-
-.train-shelf {
-  margin-bottom: 28px;
 }
 
 @media (min-width: 900px) {
