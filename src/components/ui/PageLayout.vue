@@ -1,8 +1,11 @@
 <script setup>
+import { mdiArrowLeft } from '@mdi/js'
 import AmbientBackground from './AmbientBackground.vue'
 
 defineProps({
   title: { type: String, required: true },
+  // { to, label }: a link up to the parent page, shown above the title
+  back: { type: Object, default: null },
 })
 </script>
 
@@ -10,6 +13,9 @@ defineProps({
   <div class="page">
     <AmbientBackground />
     <main class="container">
+      <RouterLink v-if="back" :to="back.to" class="back">
+        <v-icon :icon="mdiArrowLeft" size="18" />{{ back.label }}
+      </RouterLink>
       <header class="page-header">
         <h1 class="page-title">{{ title }}</h1>
         <slot name="actions" />
@@ -38,6 +44,24 @@ defineProps({
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.back {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-secondary);
+  font-size: 15px;
+  text-decoration: none;
+  padding: 8px 8px 8px 0;
+  /* Belongs to the title below it, so it sits closer than the container gap */
+  margin: -8px 0 -12px;
+  transition: color 0.2s var(--ease-out);
+}
+
+.back:hover {
+  color: var(--color-text-primary);
 }
 
 .page-header {

@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { mdiArrowLeft, mdiChevronDown } from '@mdi/js'
+import { mdiChevronDown } from '@mdi/js'
 import api from '../services/api'
 import { usePolling } from '../composables/usePolling'
 import { formatElapsed, liveWorkoutSeconds } from '../utils/formatElapsed'
@@ -87,15 +87,7 @@ async function removeFriend() {
 </script>
 
 <template>
-  <PageLayout :title="friend?.user.name ?? 'Friend'">
-    <template #actions>
-      <v-btn
-        :icon="mdiArrowLeft"
-        variant="text"
-        aria-label="Back to friends"
-        @click="router.push('/friends')"
-      />
-    </template>
+  <PageLayout :title="friend?.user.name ?? 'Friend'" :back="{ to: '/friends', label: 'Back' }">
 
     <SkeletonList v-if="isLoading" :rows="3" />
     <div v-else-if="!friend" class="empty">

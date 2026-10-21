@@ -1,7 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { mdiArrowLeft, mdiMagnify } from '@mdi/js'
+import { mdiMagnify } from '@mdi/js'
 import api from '../services/api'
 import friendsStore from '../stores/friends'
 import Avatar from './ui/Avatar.vue'
@@ -10,8 +9,6 @@ import PageLayout from './ui/PageLayout.vue'
 
 const MIN_QUERY = 2
 const DEBOUNCE_MS = 300
-
-const router = useRouter()
 
 const query = ref('')
 const results = ref([])
@@ -90,15 +87,7 @@ const cancel = (user) => act(user, () => api.delete(`/friend-requests/${user.req
 </script>
 
 <template>
-  <PageLayout title="Add friends">
-    <template #actions>
-      <v-btn
-        :icon="mdiArrowLeft"
-        variant="text"
-        aria-label="Back to friends"
-        @click="router.push('/friends')"
-      />
-    </template>
+  <PageLayout title="Add friends" :back="{ to: '/friends', label: 'Back' }">
 
     <v-text-field
       v-model="query"
