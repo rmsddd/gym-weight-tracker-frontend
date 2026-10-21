@@ -36,7 +36,7 @@ async function handleLogin() {
     const errors = error.response?.data?.errors
     if (status === 422 && errors)
       fieldErrors.value = { email: errors.email?.[0], password: errors.password?.[0] }
-    else if (status === 422) errorMessage.value = 'Incorrect email or password.'
+    else if (status === 422) errorMessage.value = 'Incorrect email, username or password.'
     else if (status === 429) errorMessage.value = 'Too many attempts. Wait a minute and try again.'
     else errorMessage.value = 'Could not log in. Check your connection and try again.'
     console.error('Login error:', error)
@@ -52,10 +52,12 @@ async function handleLogin() {
       <UnderlineField
         id="email"
         v-model="email"
-        label="Email"
-        type="email"
+        label="Email or username"
+        type="text"
         required
-        autocomplete="email"
+        autocomplete="username"
+        autocapitalize="none"
+        spellcheck="false"
         :error-messages="fieldErrors.email"
       />
       <UnderlineField
