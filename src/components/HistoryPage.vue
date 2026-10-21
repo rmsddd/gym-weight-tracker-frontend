@@ -119,6 +119,8 @@ async function loadWorkouts() {
 }
 
 onMounted(async () => {
+  // The list needs only the filters from the address, not the pickers' options: ask for both at once
+  loadWorkouts()
   try {
     const [exerciseList, deletedList, categoryList] = await Promise.all([
       catalogStore.getExercises(),
@@ -133,7 +135,6 @@ onMounted(async () => {
   } catch (error) {
     console.error('Failed to load filter options:', error)
   }
-  await loadWorkouts()
 })
 
 onMounted(async () => {

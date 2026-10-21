@@ -127,4 +127,14 @@ router.beforeEach(async (to) => {
   return true
 })
 
+// Once logged in, fetch the other tabs' chunks while the browser is idle, so tapping one opens
+// it at once instead of first waiting for its code
+let hasPrefetched = false
+router.afterEach(() => {
+  if (hasPrefetched || authStore.state.user === null) return
+  hasPrefetched = true
+  const idle = window.requestIdleCallback ?? ((callback) => setTimeout(callback, 1500))
+  idle(() => [HistoryPage, TemplatesPage, FriendsPage, ProfilePage, ActiveWorkout].forEach((load) => load().catch(() => {})))
+})
+
 export default router
