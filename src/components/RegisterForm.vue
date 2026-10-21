@@ -10,6 +10,7 @@ import UnderlineField from './ui/UnderlineField.vue'
 const router = useRouter()
 
 const name = ref('')
+const username = ref('')
 const email = ref('')
 const password = ref('')
 const passwordConfirmation = ref('')
@@ -19,6 +20,7 @@ const fieldErrors = ref({})
 
 // A message stops applying as soon as the field it is about changes
 watch(name, () => delete fieldErrors.value.name)
+watch(username, () => delete fieldErrors.value.username)
 watch(email, () => delete fieldErrors.value.email)
 watch([password, passwordConfirmation], () => delete fieldErrors.value.password)
 
@@ -29,6 +31,7 @@ async function handleRegister() {
   try {
     const sentTo = await authStore.register({
       name: name.value,
+      username: username.value,
       email: email.value,
       password: password.value,
       password_confirmation: passwordConfirmation.value,
@@ -42,6 +45,7 @@ async function handleRegister() {
     if (status === 422 && errors) {
       fieldErrors.value = {
         name: errors.name?.[0],
+        username: errors.username?.[0],
         email: errors.email?.[0],
         password: errors.password?.[0],
       }
@@ -67,6 +71,18 @@ async function handleRegister() {
         required
         autocomplete="name"
         :error-messages="fieldErrors.name"
+      />
+      <UnderlineField
+        id="username"
+        v-model="username"
+        label="Username"
+        type="text"
+        required
+        autocomplete="username"
+        autocapitalize="off"
+        spellcheck="false"
+        hint="Friends find you by it. It can't be changed later."
+        :error-messages="fieldErrors.username"
       />
       <UnderlineField
         id="email"

@@ -13,6 +13,7 @@ const showNav = computed(
     authStore.state.user !== null &&
     !route.meta.guestOnly &&
     !route.meta.public &&
+    !route.meta.choosingUsername &&
     !workoutFocus.state.isFocused,
 )
 </script>

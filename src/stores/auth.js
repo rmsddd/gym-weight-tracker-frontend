@@ -1,6 +1,7 @@
 import { reactive, readonly } from 'vue'
 import api, { ensureCsrfCookie } from '../services/api'
 import catalogStore from './catalog'
+import friendsStore from './friends'
 
 const state = reactive({
   user: null,
@@ -50,12 +51,28 @@ async function logout() {
     await api.post('/logout')
   } finally {
     catalogStore.clear() // the exercise list is per user
+    friendsStore.clear()
     state.user = null
   }
 }
 
 async function updateAvatar(avatar) {
   const response = await api.patch('/user/avatar', { avatar })
+  state.user = response.data
+
+  return state.user
+}
+
+async function updateName(name) {
+  const response = await api.patch('/user/name', { name })
+  state.user = response.data
+
+  return state.user
+}
+
+// Only for an account that has none yet: a username never changes once chosen
+async function setUsername(username) {
+  const response = await api.patch('/user/username', { username })
   state.user = response.data
 
   return state.user
@@ -73,6 +90,8 @@ export const authStore = {
   register,
   logout,
   updateAvatar,
+  updateName,
+  setUsername,
   clearUser,
 }
 

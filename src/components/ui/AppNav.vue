@@ -1,7 +1,8 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import {
+  mdiAccountMultipleOutline,
   mdiAccountOutline,
   mdiClipboardListOutline,
   mdiHistory,
@@ -11,13 +12,25 @@ import {
 } from '@mdi/js'
 import { useStartWorkout } from '../../composables/useStartWorkout'
 import authStore from '../../stores/auth'
+import friendsStore from '../../stores/friends'
 import Avatar from './Avatar.vue'
 
 const route = useRoute()
 const { isStarting, startWorkout } = useStartWorkout()
 
-// Records has no tab on the phone: it is reached from Profile, so Profile stays lit there
-const phoneSection = computed(() => (route.path === '/records' ? '/profile' : route.path))
+// Records and Friends have no tab on the phone: they are reached from Profile, so Profile stays lit
+const phoneSection = computed(() =>
+  route.path === '/records' || route.path.startsWith('/friends') ? '/profile' : route.path,
+)
+
+// The rail's Friends item stays lit on a friend's page and on Add friends too
+function isRailActive(to) {
+  return route.path === to || (to === '/friends' && route.path.startsWith('/friends/'))
+}
+
+// Requests waiting for an answer, checked again as the user moves between pages
+watch(() => route.path, friendsStore.refreshIncomingCount, { immediate: true })
+const incomingCount = computed(() => friendsStore.state.incomingCount)
 
 const tabs = [
   { title: 'Home', icon: mdiHomeOutline, to: '/dashboard' },
@@ -32,6 +45,7 @@ const railItems = [
   { title: 'Templates', icon: mdiClipboardListOutline, to: '/templates' },
   { title: 'History', icon: mdiHistory, to: '/history' },
   { title: 'Records', icon: mdiTrophyOutline, to: '/records' },
+  { title: 'Friends', icon: mdiAccountMultipleOutline, to: '/friends' },
 ]
 
 const firstName = computed(() => authStore.state.user?.name?.split(' ')[0] ?? '')
@@ -70,7 +84,14 @@ const firstName = computed(() => authStore.state.user?.name?.split(' ')[0] ?? ''
         :class="{ active: phoneSection === tab.to }"
         :aria-current="phoneSection === tab.to ? 'page' : undefined"
       >
-        <v-icon :icon="tab.icon" size="24" />
+        <span class="tab-icon">
+          <v-icon :icon="tab.icon" size="24" />
+          <span
+            v-if="tab.to === '/profile' && incomingCount > 0"
+            class="dot"
+            :aria-label="`${incomingCount} friend requests`"
+          ></span>
+        </span>
         <span>{{ tab.title }}</span>
       </RouterLink>
     </template>
@@ -90,11 +111,17 @@ const firstName = computed(() => authStore.state.user?.name?.split(' ')[0] ?? ''
       :key="item.to"
       :to="item.to"
       class="rail-item"
-      :class="{ active: route.path === item.to }"
-      :aria-current="route.path === item.to ? 'page' : undefined"
+      :class="{ active: isRailActive(item.to) }"
+      :aria-current="isRailActive(item.to) ? 'page' : undefined"
     >
       <v-icon :icon="item.icon" size="22" />
       {{ item.title }}
+      <span
+        v-if="item.to === '/friends' && incomingCount > 0"
+        class="rail-count"
+        :aria-label="`${incomingCount} friend requests`"
+        >{{ incomingCount }}</span
+      >
     </RouterLink>
 
     <RouterLink
@@ -145,6 +172,38 @@ const firstName = computed(() => authStore.state.user?.name?.split(' ')[0] ?? ''
 
 .tab.active {
   color: var(--color-accent-blush);
+}
+
+.tab-icon {
+  position: relative;
+  display: flex;
+}
+
+/* A friend request waits: Profile is the phone's way to Friends */
+.dot {
+  position: absolute;
+  top: -1px;
+  right: -3px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-surface-low);
+}
+
+.rail-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  margin-left: auto;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--color-accent-deep);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Centred over the middle slot, its bottom overlapping the bar's top border to hide it there */

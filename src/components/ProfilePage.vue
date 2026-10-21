@@ -1,9 +1,10 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { mdiChevronRight, mdiTrophyOutline } from '@mdi/js'
+import { mdiAccountMultipleOutline, mdiChevronRight, mdiTrophyOutline } from '@mdi/js'
 import api from '../services/api'
 import authStore from '../stores/auth'
+import friendsStore from '../stores/friends'
 import AvatarPicker from './ui/AvatarPicker.vue'
 import BaseButton from './ui/BaseButton.vue'
 import BodyAvatar from './ui/BodyAvatar.vue'
@@ -59,6 +60,37 @@ const stats = computed(() => [
   { label: 'Personal records', value: totals.value.records_count },
 ])
 
+// The display name can change; the username next to it cannot
+const isEditingName = ref(false)
+const nameDraft = ref('')
+const nameError = ref('')
+const isSavingName = ref(false)
+
+function startEditingName() {
+  nameDraft.value = user.value?.name ?? ''
+  nameError.value = ''
+  isEditingName.value = true
+}
+
+async function saveName() {
+  if (isSavingName.value) return
+  isSavingName.value = true
+  nameError.value = ''
+
+  try {
+    await authStore.updateName(nameDraft.value.trim())
+    isEditingName.value = false
+  } catch (error) {
+    nameError.value =
+      error.response?.status === 422 ? 'Enter a name.' : 'Could not save your name. Try again.'
+    console.error('Failed to update name:', error)
+  } finally {
+    isSavingName.value = false
+  }
+}
+
+onMounted(() => friendsStore.refreshIncomingCount())
+
 async function handleLogout() {
   await authStore.logout()
   router.push('/login')
@@ -91,7 +123,30 @@ async function handleLogout() {
 
     <v-card color="surface-bright" border class="panel">
       <p class="label">Name</p>
-      <p class="value">{{ user?.name }}</p>
+      <form v-if="isEditingName" class="name-form" @submit.prevent="saveName">
+        <v-text-field
+          v-model="nameDraft"
+          label="Name"
+          name="name"
+          autocomplete="name"
+          density="compact"
+          variant="outlined"
+          autofocus
+          :error-messages="nameError"
+        />
+        <div class="name-actions">
+          <BaseButton type="submit" size="sm" :loading="isSavingName">Save</BaseButton>
+          <v-btn variant="text" size="small" :disabled="isSavingName" @click="isEditingName = false"
+            >Cancel</v-btn
+          >
+        </div>
+      </form>
+      <div v-else class="name-row">
+        <p class="value">{{ user?.name }}</p>
+        <v-btn variant="text" size="small" @click="startEditingName">Edit</v-btn>
+      </div>
+      <p class="label">Username</p>
+      <p class="value">@{{ user?.username }}</p>
       <p class="label">Email</p>
       <p class="value">{{ user?.email }}</p>
       <p class="label">Member since</p>
@@ -105,7 +160,18 @@ async function handleLogout() {
       </v-card>
     </section>
 
-    <!-- The phone's tab bar has no Records tab, so this is its way in -->
+    <!-- The phone's tab bar has no Friends or Records tab, so these are its way in -->
+    <RouterLink to="/friends" class="records-link pressable">
+      <v-icon :icon="mdiAccountMultipleOutline" size="22" class="records-icon" />
+      <span class="records-text">Friends</span>
+      <span
+        v-if="friendsStore.state.incomingCount > 0"
+        class="request-count"
+        :aria-label="`${friendsStore.state.incomingCount} friend requests`"
+        >{{ friendsStore.state.incomingCount }}</span
+      >
+      <v-icon :icon="mdiChevronRight" size="20" class="records-chevron" />
+    </RouterLink>
     <RouterLink to="/records" class="records-link pressable">
       <v-icon :icon="mdiTrophyOutline" size="22" class="records-icon" />
       <span class="records-text">Personal records</span>
@@ -283,5 +349,39 @@ async function handleLogout() {
 
 .records-chevron {
   color: var(--color-text-faint);
+}
+
+.request-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: var(--color-accent-deep);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.name-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.name-row .v-btn {
+  margin-top: -6px;
+}
+
+.name-form {
+  margin-bottom: 12px;
+}
+
+.name-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 </style>

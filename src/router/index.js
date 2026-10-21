@@ -15,6 +15,10 @@ const NotFoundPage = () => import('../components/NotFoundPage.vue')
 const ForgotPasswordPage = () => import('../components/ForgotPasswordPage.vue')
 const ResetPasswordPage = () => import('../components/ResetPasswordPage.vue')
 const VerifyEmailPage = () => import('../components/VerifyEmailPage.vue')
+const FriendsPage = () => import('../components/FriendsPage.vue')
+const AddFriendsPage = () => import('../components/AddFriendsPage.vue')
+const FriendPage = () => import('../components/FriendPage.vue')
+const ChooseUsernamePage = () => import('../components/ChooseUsernamePage.vue')
 
 const router = createRouter({
   history: createWebHistory(),
@@ -51,6 +55,26 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     { path: '/profile', name: 'profile', component: ProfilePage, meta: { requiresAuth: true } },
+    { path: '/friends', name: 'friends', component: FriendsPage, meta: { requiresAuth: true } },
+    {
+      path: '/friends/add',
+      name: 'friends-add',
+      component: AddFriendsPage,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/friends/:username',
+      name: 'friend',
+      component: FriendPage,
+      meta: { requiresAuth: true },
+    },
+    // Accounts from before usernames existed land here until they choose one
+    {
+      path: '/choose-username',
+      name: 'choose-username',
+      component: ChooseUsernamePage,
+      meta: { requiresAuth: true, choosingUsername: true },
+    },
     {
       path: '/workouts/new',
       name: 'workout-new',
@@ -88,6 +112,15 @@ router.beforeEach(async (to) => {
   }
 
   if (to.meta.guestOnly && isAuthenticated) {
+    return { name: 'dashboard' }
+  }
+
+  // Friends find each other by username, so an account without one picks it before anything else
+  const needsUsername = isAuthenticated && !authStore.state.user.username
+  if (needsUsername && !isOpen && !to.meta.choosingUsername) {
+    return { name: 'choose-username' }
+  }
+  if (!needsUsername && to.meta.choosingUsername) {
     return { name: 'dashboard' }
   }
 
