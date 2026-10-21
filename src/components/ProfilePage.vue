@@ -1,10 +1,9 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { mdiAccountMultipleOutline, mdiChevronRight, mdiTrophyOutline } from '@mdi/js'
+import { mdiChevronRight, mdiTrophyOutline } from '@mdi/js'
 import api from '../services/api'
 import authStore from '../stores/auth'
-import friendsStore from '../stores/friends'
 import AvatarPicker from './ui/AvatarPicker.vue'
 import BaseButton from './ui/BaseButton.vue'
 import BodyAvatar from './ui/BodyAvatar.vue'
@@ -89,8 +88,6 @@ async function saveName() {
   }
 }
 
-onMounted(() => friendsStore.refreshIncomingCount())
-
 async function handleLogout() {
   await authStore.logout()
   router.push('/login')
@@ -160,18 +157,7 @@ async function handleLogout() {
       </v-card>
     </section>
 
-    <!-- The phone's tab bar has no Friends or Records tab, so these are its way in -->
-    <RouterLink to="/friends" class="records-link pressable">
-      <v-icon :icon="mdiAccountMultipleOutline" size="22" class="records-icon" />
-      <span class="records-text">Friends</span>
-      <span
-        v-if="friendsStore.state.incomingCount > 0"
-        class="request-count"
-        :aria-label="`${friendsStore.state.incomingCount} friend requests`"
-        >{{ friendsStore.state.incomingCount }}</span
-      >
-      <v-icon :icon="mdiChevronRight" size="20" class="records-chevron" />
-    </RouterLink>
+    <!-- The phone's tab bar has no Records tab, so this is its way in -->
     <RouterLink to="/records" class="records-link pressable">
       <v-icon :icon="mdiTrophyOutline" size="22" class="records-icon" />
       <span class="records-text">Personal records</span>
@@ -351,18 +337,6 @@ async function handleLogout() {
   color: var(--color-text-faint);
 }
 
-.request-count {
-  display: inline-grid;
-  place-items: center;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 6px;
-  border-radius: 11px;
-  background: var(--color-accent-deep);
-  font-size: 12px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
 
 .name-row {
   display: flex;

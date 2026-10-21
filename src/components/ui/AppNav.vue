@@ -18,25 +18,34 @@ import Avatar from './Avatar.vue'
 const route = useRoute()
 const { isStarting, startWorkout } = useStartWorkout()
 
-// Records and Friends have no tab on the phone: they are reached from Profile, so Profile stays lit
-const phoneSection = computed(() =>
-  route.path === '/records' || route.path.startsWith('/friends') ? '/profile' : route.path,
-)
+// Pages without a tab of their own light the tab they are reached from: Records from Profile,
+// History from Home, and a friend's page or Add friends from Friends
+const phoneSection = computed(() => {
+  if (route.path === '/records') return '/profile'
+  if (route.path === '/history') return '/dashboard'
+  if (route.path.startsWith('/friends')) return '/friends'
+  return route.path
+})
 
 // The rail's Friends item stays lit on a friend's page and on Add friends too
 function isRailActive(to) {
   return route.path === to || (to === '/friends' && route.path.startsWith('/friends/'))
 }
 
-// Requests waiting for an answer, checked again as the user moves between pages
-watch(() => route.path, friendsStore.refreshIncomingCount, { immediate: true })
+// Requests waiting for an answer, checked again as the user moves between pages; an account
+// still without a username has none to check
+watch(
+  () => route.path,
+  () => authStore.state.user?.username && friendsStore.refreshIncomingCount(),
+  { immediate: true },
+)
 const incomingCount = computed(() => friendsStore.state.incomingCount)
 
 const tabs = [
   { title: 'Home', icon: mdiHomeOutline, to: '/dashboard' },
   { title: 'Templates', icon: mdiClipboardListOutline, to: '/templates' },
   null, // the ＋ button sits in the middle
-  { title: 'History', icon: mdiHistory, to: '/history' },
+  { title: 'Friends', icon: mdiAccountMultipleOutline, to: '/friends' },
   { title: 'Profile', icon: mdiAccountOutline, to: '/profile' },
 ]
 
@@ -87,7 +96,7 @@ const firstName = computed(() => authStore.state.user?.name?.split(' ')[0] ?? ''
         <span class="tab-icon">
           <v-icon :icon="tab.icon" size="24" />
           <span
-            v-if="tab.to === '/profile' && incomingCount > 0"
+            v-if="tab.to === '/friends' && incomingCount > 0"
             class="dot"
             :aria-label="`${incomingCount} friend requests`"
           ></span>
@@ -179,7 +188,7 @@ const firstName = computed(() => authStore.state.user?.name?.split(' ')[0] ?? ''
   display: flex;
 }
 
-/* A friend request waits: Profile is the phone's way to Friends */
+/* A friend request waits for an answer */
 .dot {
   position: absolute;
   top: -1px;

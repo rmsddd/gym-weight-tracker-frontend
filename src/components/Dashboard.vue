@@ -48,7 +48,6 @@ const sortedWorkouts = computed(() =>
 const runningWorkouts = computed(() => sortedWorkouts.value.filter(isRunning))
 const pastWorkouts = computed(() => sortedWorkouts.value.filter((workout) => !isRunning(workout)))
 const recentWorkouts = computed(() => pastWorkouts.value.slice(0, RECENT_LIMIT))
-const hasMore = computed(() => pastWorkouts.value.length > RECENT_LIMIT)
 
 const last30DaysWorkouts = computed(() => {
   const cutoff = new Date()
@@ -168,7 +167,11 @@ async function confirmDelete() {
           </section>
 
           <section class="recent-section">
-            <h2 class="section-title">Recent workouts</h2>
+            <!-- The phone's tab bar has no History tab, so this is its way in -->
+            <div class="section-head">
+              <h2 class="section-title">Recent workouts</h2>
+              <RouterLink to="/history" class="history-link">History →</RouterLink>
+            </div>
 
             <SkeletonList v-if="isLoading" :rows="3" />
             <div v-else-if="sortedWorkouts.length === 0" class="empty-state">
@@ -229,10 +232,6 @@ async function confirmDelete() {
                   </div>
                 </li>
               </ul>
-
-              <RouterLink v-if="hasMore" to="/history" class="see-all"
-                >See all workouts in History →</RouterLink
-              >
             </template>
           </section>
         </div>
@@ -591,10 +590,22 @@ async function confirmDelete() {
   pointer-events: none;
 }
 
-.see-all {
-  display: inline-block;
-  margin-top: 14px;
-  padding: 6px 0;
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.section-head .section-title {
+  margin: 0;
+}
+
+/* Padded into a comfortable tap target without moving the title off its line */
+.history-link {
+  margin: -8px -8px -8px 0;
+  padding: 8px;
   font-size: 14px;
   font-weight: 600;
   color: var(--color-text-secondary);
@@ -602,7 +613,7 @@ async function confirmDelete() {
   transition: color 0.2s var(--ease-out);
 }
 
-.see-all:hover {
+.history-link:hover {
   color: var(--color-text-primary);
 }
 
