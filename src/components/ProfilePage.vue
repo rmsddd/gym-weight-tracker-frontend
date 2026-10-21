@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { mdiChevronRight, mdiShieldAccountOutline, mdiTrophyOutline } from '@mdi/js'
+import { mdiChevronRight, mdiTrophyOutline } from '@mdi/js'
 import api from '../services/api'
 import authStore from '../stores/auth'
 import AvatarPicker from './ui/AvatarPicker.vue'
@@ -11,6 +11,7 @@ import PageLayout from './ui/PageLayout.vue'
 
 const router = useRouter()
 const { can } = authStore
+const isRoot = authStore.isRoot()
 
 const totals = ref({ workouts_count: 0, total_minutes: 0, records_count: 0 })
 const isPickerOpen = ref(false)
@@ -18,7 +19,7 @@ const muscleStats = ref([])
 
 onMounted(async () => {
   // Without stats the page keeps its zeros
-  if (!can('stats.view')) return
+  if (!can('stats.view') || isRoot) return
 
   try {
     // Totals come pre-computed, instead of downloading every workout and record to count them
@@ -100,7 +101,7 @@ async function handleLogout() {
 
 <template>
   <PageLayout title="Profile">
-    <v-card color="surface-bright" border class="panel build">
+    <v-card color="surface-bright" border class="panel build" :class="{ solo: isRoot }">
       <div class="build-figure">
         <BodyAvatar :code="user?.avatar" :levels="muscleLevels" :width="150" />
         <BaseButton
@@ -113,7 +114,8 @@ async function handleLogout() {
         </BaseButton>
       </div>
 
-      <div class="build-info">
+      <!-- Root only administers: it has no workouts to build from -->
+      <div v-if="!isRoot" class="build-info">
         <h2 class="build-title">Your build</h2>
         <p class="build-hint">Each muscle group grows with every workout this week. Resets on Monday.</p>
 
@@ -163,7 +165,7 @@ async function handleLogout() {
       <p class="value last">{{ memberSince }}</p>
     </v-card>
 
-    <section class="stats">
+    <section v-if="!isRoot" class="stats">
       <v-card v-for="stat in stats" :key="stat.label" color="surface" class="stat-card">
         <p class="stat-label">{{ stat.label }}</p>
         <p class="stat-value">{{ stat.value }}</p>
@@ -171,16 +173,9 @@ async function handleLogout() {
     </section>
 
     <!-- The phone's tab bar has no Records tab, so this is its way in -->
-    <RouterLink v-if="can('stats.view')" to="/records" class="records-link pressable">
+    <RouterLink v-if="can('stats.view') && !isRoot" to="/records" class="records-link pressable">
       <v-icon :icon="mdiTrophyOutline" size="22" class="records-icon" />
       <span class="records-text">Personal records</span>
-      <v-icon :icon="mdiChevronRight" size="20" class="records-chevron" />
-    </RouterLink>
-
-    <!-- Root's way to the admin page on the phone; the PC rail links it too -->
-    <RouterLink v-if="authStore.isRoot()" to="/admin" class="records-link pressable">
-      <v-icon :icon="mdiShieldAccountOutline" size="22" class="records-icon" />
-      <span class="records-text">Admin</span>
       <v-icon :icon="mdiChevronRight" size="20" class="records-chevron" />
     </RouterLink>
 
@@ -200,6 +195,10 @@ async function handleLogout() {
   display: flex;
   align-items: flex-start;
   gap: 22px;
+}
+
+.build.solo {
+  justify-content: center;
 }
 
 .build-figure {

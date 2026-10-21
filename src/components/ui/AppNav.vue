@@ -18,6 +18,8 @@ import Avatar from './Avatar.vue'
 
 const route = useRoute()
 const { can } = authStore
+// Root only administers: its navigation is the admin page and its profile
+const isRoot = computed(() => authStore.isRoot())
 const { isStarting, startWorkout } = useStartWorkout()
 
 // Pages without a tab of their own light the tab they are reached from: Records from Profile,
@@ -40,6 +42,7 @@ watch(
   () => route.path,
   () =>
     authStore.state.user?.username &&
+    !isRoot.value &&
     can('friends.requests') &&
     friendsStore.refreshIncomingCount(),
   { immediate: true },
@@ -48,7 +51,7 @@ const incomingCount = computed(() => friendsStore.state.incomingCount)
 
 // An entry needing a permission the role lacks is left out; on the tab bar its slot stays empty,
 // so the ＋ button keeps the middle
-const tabs = [
+const userTabs = [
   { title: 'Home', icon: mdiHomeOutline, to: '/dashboard' },
   {
     title: 'Templates',
@@ -60,6 +63,15 @@ const tabs = [
   { title: 'Friends', icon: mdiAccountMultipleOutline, to: '/friends', permission: 'friends.view' },
   { title: 'Profile', icon: mdiAccountOutline, to: '/profile' },
 ]
+
+const tabs = computed(() =>
+  isRoot.value
+    ? [
+        { title: 'Admin', icon: mdiShieldAccountOutline, to: '/admin' },
+        { title: 'Profile', icon: mdiAccountOutline, to: '/profile' },
+      ]
+    : userTabs,
+)
 
 const railItems = computed(() =>
   [
@@ -79,8 +91,8 @@ const railItems = computed(() =>
       permission: 'friends.view',
     },
     { title: 'Admin', icon: mdiShieldAccountOutline, to: '/admin', rootOnly: true },
-  ].filter(
-    (item) => (!item.permission || can(item.permission)) && (!item.rootOnly || authStore.isRoot()),
+  ].filter((item) =>
+    isRoot.value ? item.rootOnly : !item.rootOnly && (!item.permission || can(item.permission)),
   ),
 )
 
@@ -89,10 +101,17 @@ const firstName = computed(() => authStore.state.user?.name?.split(' ')[0] ?? ''
 
 <template>
   <!-- Phone: tab bar along the bottom edge -->
-  <nav class="tab-bar" aria-label="Main">
+  <nav class="tab-bar" :class="{ 'root-bar': isRoot }" aria-label="Main">
     <!-- The bar's top edge rises around the ＋ button along a circle concentric with it, so the
          button sits inside the bar instead of floating over it -->
-    <svg class="hump" viewBox="0 0 100 26" width="100" height="26" aria-hidden="true">
+    <svg
+      v-if="!isRoot"
+      class="hump"
+      viewBox="0 0 100 26"
+      width="100"
+      height="26"
+      aria-hidden="true"
+    >
       <path
         class="hump-fill"
         d="M0 22.5 H7 Q17 22.5 21.2 18 A34 34 0 0 1 78.8 18 Q83 22.5 93 22.5 H100 V26 H0 Z"
@@ -143,7 +162,7 @@ const firstName = computed(() => authStore.state.user?.name?.split(' ')[0] ?? ''
     <p class="brand">Gym Weight Tracker</p>
 
     <button
-      v-if="can('workouts.create')"
+      v-if="!isRoot && can('workouts.create')"
       type="button"
       class="rail-start"
       :disabled="isStarting"
@@ -201,6 +220,11 @@ const firstName = computed(() => authStore.state.user?.name?.split(' ')[0] ?? ''
   background: var(--color-surface-low);
   border-top: 1px solid var(--color-divider);
   box-sizing: border-box;
+}
+
+/* Root's two tabs: no ＋ button to keep a middle for */
+.tab-bar.root-bar {
+  grid-template-columns: repeat(2, 1fr);
 }
 
 .tab {

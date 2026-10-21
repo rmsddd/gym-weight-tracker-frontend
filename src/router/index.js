@@ -65,7 +65,12 @@ const router = createRouter({
       component: TemplatesPage,
       meta: { requiresAuth: true, permission: 'templates.view' },
     },
-    { path: '/profile', name: 'profile', component: ProfilePage, meta: { requiresAuth: true } },
+    {
+      path: '/profile',
+      name: 'profile',
+      component: ProfilePage,
+      meta: { requiresAuth: true, forRoot: true },
+    },
     {
       path: '/friends',
       name: 'friends',
@@ -108,7 +113,7 @@ const router = createRouter({
       path: '/admin',
       name: 'admin',
       component: AdminPage,
-      meta: { requiresAuth: true, requiresRoot: true },
+      meta: { requiresAuth: true, requiresRoot: true, forRoot: true },
     },
     {
       path: '/:pathMatch(.*)*',
@@ -147,6 +152,11 @@ router.beforeEach(async (to) => {
     return { name: 'dashboard' }
   }
 
+  // Root only administers: its whole app is the admin page and its profile
+  if (isAuthenticated && authStore.isRoot() && !isOpen && !to.meta.forRoot) {
+    return { name: 'admin' }
+  }
+
   if (to.meta.requiresRoot && !authStore.isRoot()) {
     return { name: 'dashboard' }
   }
@@ -163,7 +173,8 @@ router.beforeEach(async (to) => {
 // it at once instead of first waiting for its code
 let hasPrefetched = false
 router.afterEach(() => {
-  if (hasPrefetched || authStore.state.user === null) return
+  // Root never opens these pages, so it has nothing to prefetch
+  if (hasPrefetched || authStore.state.user === null || authStore.isRoot()) return
   hasPrefetched = true
   const idle = window.requestIdleCallback ?? ((callback) => setTimeout(callback, 1500))
   idle(() =>
